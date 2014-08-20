@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-__author__ = 'Comix'
 import yaml, requests, json
 import logging
 
 LOCATION_TO_CONFIGURATION_FILE = 'crowdin.yaml'
-ACCOUNT_KEY = '81c45981baa0868a86a2c0a55b657073'
-USER_NAME = 'Paul_Gregor'
+ACCOUNT_KEY = ''
+USER_NAME = ''
 
 logger = logging.getLogger('crowdin')
 
