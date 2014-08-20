@@ -102,6 +102,7 @@ class Connection(Configuration):
             return result_handling(response.text)
         # raise CliException(response.text)
         else:
+
             return response.content
             #return response.text
 
@@ -119,7 +120,7 @@ def result_handling(self):
 
 
 
-print Configuration().export_pattern_to_path("/locale/fr/LC_MESSAGES/messages.po", "fr")
+#print Configuration().export_pattern_to_path("/locale/fr/LC_MESSAGES/messages.po", "fr")
 
 
 

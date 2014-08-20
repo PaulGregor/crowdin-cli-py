@@ -24,8 +24,20 @@ class Methods:
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par3': '/info'}
         params = {'json': 'json'}
         data = json.loads(Connection(url, params).connect())
-        for i in data['languages']:
-            print i['code']
+        #for key, value in data.iteritems():
+        #    if key == "languages":
+        #        print value[]
+        lang = []
+
+        for langs in data['languages']:
+            lang.append(langs)
+        for key, value in data['details']['source_language'].iteritems():
+            lang.append({key: value})
+        return lang
+
+
+
+
 
     def exists(self, name):
 
@@ -73,21 +85,26 @@ class Methods:
         # params = {'titles': kwargs['titles'], 'export_patterns': kwargs['export_patterns'],
         #           'type': kwargs['type'], 'json': json}
         params = {'json': json}
-
-        with open(file[1:], 'rb') as f:
-            files = {'files[{0}]'.format(file): f}
+        if file[0] == '/':ff = file[1:]
+        else: ff = file
+        with open(ff, 'rb') as f:
+            files = {'files[{0}]'.format(ff): f}
             return Connection(url, params, files).connect()
 
 
     def update_files(self, file, kwargs=None):
         # POST https://api.crowdin.com/api/project/{project-identifier}/update-file?key={project-key}
 
-        logger.info("Uploading file to remote directory {0}".format(file))
+        logger.info("Updating file to remote directory {0}".format(file))
 
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par3': '/update-file'}
         params = {'json': json}
-        with open(file[1:], 'rb') as f:
-            files = {'files[{0}]'.format(file): f}
+        if file[0] == '/' :ff = file[1:]
+        else: ff = file
+
+        with open(ff, 'rb') as f:
+            files = {'files[{0}]'.format(ff): f}
+            #print files
             return Connection(url, params, files).connect()
 
 
@@ -96,9 +113,8 @@ class Methods:
         files = []
 
         for item in Methods().parse(Methods().get_info()):
-            l = []
-            p = "/"
 
+            p = "/"
             f = item[:item.rfind("/")]
             l = f[1:].split("/")
             i = 0
@@ -107,13 +123,14 @@ class Methods:
                 i = i + 1
                 if not p in dirs:
                     dirs.append(p)
+
             if not item.endswith("/"):
                 files.append(item)
 
         for item in self.exists(Configuration().get_files_source()):
-            if not item[:item.rfind("/")] in dirs:
+            if '/' in item and not item[:item.rfind("/")] in dirs:
                 items = item[:item.rfind("/")]
-                l = []
+
                 p = "/"
                 l = items[1:].split("/")
                 i = 0
@@ -121,8 +138,12 @@ class Methods:
                     p = p + l[i] + "/"
                     i = i + 1
                     if not p in dirs:
+                        dirs.append(p)
                         self.create_directory(p)
-            if not item in files:
+            if item[0] != '/': ite="/"+item
+            else: ite = item
+
+            if not ite in files:
                 self.upload_files(item)
             else:
                 self.update_files(item)
@@ -133,6 +154,12 @@ class Methods:
 
             #self.create_directory(item[:item.rfind("/")])
             #print dirs
+
+
+    def supported_languages(self):
+        # GET https://api.crowdin.com/api/supported-languages
+        logger.info("Getting supported languages list with Crowdin codes mapped to locale name and standardized codes.")
+
 
     def download_project(self):
         # GET https://api.crowdin.com/api/project/{project-identifier}/download/{package}.zip?key={project-key}
@@ -161,6 +188,7 @@ class Methods:
             print unmatched_files
 
 
-#Methods().download_project()
+#for i in Methods().get_info_lang():
+#    print i['name']
 
 # Methods().create_directory("/locale/fr/LC_MESSAGES/")
