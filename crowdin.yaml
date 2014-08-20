@@ -1,9 +1,0 @@
-project_identifier: 
-api_key: 
-base_url: http://api.crowdin.net
-base_path: I:\www\Opoz\Crowdin\projects
-
-files:
-  -
-    source: /locale/en/LC_MESSAGES/messages.po
-    translation: /locale/%two_letters_code%/LC_MESSAGES/%original_file_name%

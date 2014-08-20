@@ -18,7 +18,7 @@ logger.addHandler(console)
 
 
 def create_directory(string):
-    print methods.Methods().create_directory(string.dirname, string.json, string.jsonp)
+    print methods.Methods().create_directory(string.dirname)
 
 
 def upload_files(string):
@@ -29,8 +29,8 @@ def upload_files(string):
         # print methods.Methods().upload_files(string.dirname, string.json, string.jsonp)
 
 
-def download_project(string):
-    pass
+def download_project():
+    print methods.Methods().download_project()
 
 
 loc = gettext.translation('cli', 'locales', languages=['en'])
@@ -50,7 +50,7 @@ upload_parser.set_defaults(func=upload_files)
 
 
 # A download command
-download_parser = subparsers.add_parser('download', help='Download projects filles')
+download_parser = subparsers.add_parser('download', help='Download projects files')
 
 download_parser.set_defaults(func=download_project)
 
