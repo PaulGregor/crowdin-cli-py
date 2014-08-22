@@ -1,0 +1,2 @@
+include crowdin/locales/en/LC_MESSAGES/cli.mo
+include requirements.txt
