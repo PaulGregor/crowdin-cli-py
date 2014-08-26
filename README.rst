@@ -23,25 +23,24 @@ If you don't have ``pip``::
 
 When the tool is installed, you would have to configure your project. Basically, `crowdin-cli` go through project directory, and looks for `crowdin.yaml` file that contains project information.
 
-Create `crowdin.yaml` YAML file in your root project directory with the following structure:
+Create `crowdin.yaml` YAML file in your root project directory with the following structure::
 
-```
-project_identifier: test
-api_key: KeepTheAPIkeySecret
-base_path: /path/to/your/project
+	project_identifier: test
+	api_key: KeepTheAPIkeySecret
+	base_path: /path/to/your/project
+	
+	files:
+	  -
+	    source: /locale/en/LC_MESSAGES/messages.po
+	    translation: /locale/%two_letters_code%/LC_MESSAGES/%original_file_name%
 
-files:
-  -
-    source: /locale/en/LC_MESSAGES/messages.po
-    translation: /locale/%two_letters_code%/LC_MESSAGES/%original_file_name%
-```
 
-* `api_key` - Crowdin Project API key
-* `project_identifier` - Crowdin project name
-* `base_path` - defines what directory have to be scaned(default: current directory)
-* `files`
-  * `source` - defines only files that should be uploaded as sources
-  * `translation` - defines where translations should be placed after downloading (also the path have to be checked to detect and upload existing translations)
+* ``api_key`` - Crowdin Project API key
+* ``project_identifier`` - Crowdin project name
+* ``base_path`` - defines what directory have to be scaned(default: current directory)
+* ``files``
+	* ``source`` - defines only files that should be uploaded as sources
+  	* ``translation`` - defines where translations should be placed after downloading (also the path have to be checked to detect and upload existing translations)
 
         Use the following placeholders to put appropriate variables into the resulting file name:
       * `%language%` - Language name (i.e. Ukrainian)
@@ -61,16 +60,10 @@ When the configuration file is created, you are ready to start using `crowdin-cl
 We listed most typical commands that crowdin-cli is used for:
 
 Upload your source files to Crowdin:
-```
-$ crowdin-cli-py upload sources
-```
+``$ crowdin-cli-py upload sources``
 
 Upload existing translations to Crowdin project (translations will be synchronized):
-```
-$ crowdin-cli-py upload translations
-```
+``$ crowdin-cli-py upload translations``
 
 Download latest translations from Crowdin:
-```
-$ crowdin-cli-py download
-```
+``$ crowdin-cli-py download``
