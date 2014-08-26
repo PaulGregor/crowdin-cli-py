@@ -2,9 +2,9 @@
 from connection import Connection, Configuration
 import logging
 import json
-import os
 import zipfile
 import io
+#import os
 
 logger = logging.getLogger('crowdin')
 
@@ -47,7 +47,6 @@ class Methods:
 
 
     def exists(self, name):
-
         for f in name:
             for i in f.split():
                 yield i
@@ -87,7 +86,7 @@ class Methods:
     def upload_files(self, files, export_patterns):
         # POST https://api.crowdin.com/api/project/{project-identifier}/add-file?key={project-key}
 
-        logger.info("Uploading file to remote directory {0}".format(files))
+        logger.info("Uploading source file to remote directory {0}".format(files))
 
         url = {'post': 'POST', 'url_par1': '/api/project/','url_par2': True,
                'url_par3': '/add-file', 'url_par4': True}
@@ -97,15 +96,18 @@ class Methods:
         if files[0] == '/':ff = files[1:]
         else: ff = files
         params = {'json': json, 'export_patterns[{0}]'.format(ff): export_patterns}
-        with open(ff, 'rb') as f:
-            api_files = {'files[{0}]'.format(ff): f}
-            return Connection(url, params, api_files).connect()
+        try:
+            with open(ff, 'rb') as f:
+                api_files = {'files[{0}]'.format(ff): f}
+                return Connection(url, params, api_files).connect()
+        except(OSError, IOError) as e:
+            print e, "\n Skipped"
 
 
     def update_files(self, files, export_patterns):
         # POST https://api.crowdin.com/api/project/{project-identifier}/update-file?key={project-key}
 
-        logger.info("Updating file to remote directory {0}".format(files))
+        logger.info("Updating source file in remote directory {0}".format(files))
 
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/update-file', 'url_par4': True}
@@ -113,15 +115,18 @@ class Methods:
         if files[0] == '/' :ff = files[1:]
         else: ff = files
         params = {'json': json, 'export_patterns[{0}]'.format(ff): export_patterns}
-        with open(ff, 'rb') as f:
-            api_files = {'files[{0}]'.format(ff): f}
-            #print files
-            return Connection(url, params, api_files).connect()
+        try:
+            with open(ff, 'rb') as f:
+                api_files = {'files[{0}]'.format(ff): f}
+                #print files
+                return Connection(url, params, api_files).connect()
+        except(OSError, IOError) as e:
+            print e, "\n Skipped"
 
     def upload_translations_files(self, translations, language, source_file):
         # POST https://api.crowdin.com/api/project/{project-identifier}/upload-translation?key={project-key
 
-        logger.info("Uploading {0} translation".format(language))
+        logger.info("Uploading {0} translation for source file: {1}".format(language, source_file))
 
         url = dict(post='POST', url_par1='/api/project/', url_par2=True, url_par3='/upload-translation', url_par4=True)
         params = {'json': 'json', 'language': language, 'auto_approve_imported': 1}
@@ -153,7 +158,7 @@ class Methods:
                 files.append(item)
         all_info = Configuration().get_files_source()
         info2 = self.exists(all_info[::2])
-        for item in info2:
+        for item, export_patterns in zip(info2, all_info[1::2]):
             if '/' in item and not item[:item.rfind("/")] in dirs:
                 items = item[:item.rfind("/")]
 
@@ -168,11 +173,11 @@ class Methods:
                         self.create_directory(p)
             if item[0] != '/': ite="/"+item
             else: ite = item
-            for export_patterns in all_info[1::2]:
-                if not ite in files:
-                    self.upload_files(item, export_patterns)
-                else:
-                    self.update_files(item, export_patterns)
+
+            if not ite in files:
+                self.upload_files(item, export_patterns)
+            else:
+                self.update_files(item, export_patterns)
         if dirss:
             return dirs
 
@@ -180,11 +185,9 @@ class Methods:
     def upload_translations(self):
         info2 = Configuration().export_pattern_to_path(self.lang())
         dic_info = info2[1::2]
-        for i in dic_info:
+        for i, source_file in zip(dic_info, info2[::2]):
             for language, item in i.iteritems():
-                for source_file in info2[::2]:
-
-                    self.upload_translations_files(item, language, source_file)
+                self.upload_translations_files(item, language, source_file)
 
 
 
@@ -198,7 +201,8 @@ class Methods:
 
     def download_project(self):
         # GET https://api.crowdin.com/api/project/{project-identifier}/download/{package}.zip?key={project-key}
-        logger.info("Downloading translations")
+        logger.info("Downloading translations:")
+
 
         url = {'post': 'GET', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/download/all.zip', 'url_par4': True}
@@ -209,19 +213,21 @@ class Methods:
 
         with zipfile.ZipFile(io.BytesIO(Connection(url, params).connect())) as z:
             #for i in self.exists(Configuration().get_files_source()):
+
             for structure in z.namelist():
                     # if structure.endswith(i):
                     #     # with open(os.path.join(i[1:][:i.rfind("/")], os.path.basename(structure)), 'wb') as f:
                     #     #     f.write(z.read(structure))
-                z.extract(structure)
-
-                    # else:
-                    #     unmatched_files = structure
-
-        if unmatched_files:
-            logger.info("Warning: Downloaded translations do not match current project "
-                         "configuration. Some of the resulted files will be omitted.")
-            print unmatched_files
+                if not structure.endswith("/"):
+                    logger.info("{0}".format(structure))
+                    z.extract(structure)
+        #         else:
+        #             unmatched_files.append(structure)
+        #
+        # if unmatched_files:
+        #     logger.info("Warning: Downloaded translations do not match current project "
+        #                  "configuration. Some of the resulted files will be omitted.")
+        #     print unmatched_files
 
 
 # for i in Methods().get_info_lang():

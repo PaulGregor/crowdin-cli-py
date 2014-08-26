@@ -1,7 +1,11 @@
-# -*- coding: utf-8 -*-
-import yaml, requests, json
+﻿# -*- coding: utf-8 -*-
+import json
+import os
 import re
 import logging
+import yaml
+import requests
+
 
 LOCATION_TO_CONFIGURATION_FILE = 'crowdin.yaml'
 
@@ -29,13 +33,30 @@ class Configuration(object):
 
             # assigning configuration values
             # print "Reading configuration from the file was successful"
-            self.project_identifier = config['project_identifier']
-            self.api_key = config['api_key']
+            if config['project_identifier']:
+                self.project_identifier = config['project_identifier']
+            else:
+                print "project_identifier is required in config file."
+                exit()
+            if config['api_key']:
+                self.api_key = config['api_key']
+            else:
+                print "api_key is required in config file."
+                exit()
+
             self.base_url = 'https://api.crowdin.com'
-            self.base_path = config['base_path']
+            if config['base_path']:
+                #print config['base_path']
+                self.base_path = config['base_path']
+            else:
+                self.base_path = os.getcwd()
             # self.files_source = config['files'][0]['source']
-            self.files_source = config['files']
-            
+            if config['files']:
+                self.files_source = config['files']
+            else:
+                print "You didn't set any files in your config. It's very sad."
+
+
 
     def get_project_identifier(self):
         return self.project_identifier
@@ -56,11 +77,28 @@ class Configuration(object):
             sources.append(f['translation'])
         return sources
 
+    def android_locale_code(self, locale_code):
+        if locale_code == "he-IL":
+            locale_code = "iw-IL"
+        elif locale_code == "yi-DE":
+            locale_code = "ji-DE"
+        elif locale_code == "id-ID":
+            locale_code = "in-ID"
+        return locale_code.replace('-', '-r')
+
+    def osx_language_code(self, locale_code):
+        if locale_code == "zh-TW":
+            locale_code = "zh-Hant"
+        elif locale_code == "zh-CN":
+            locale_code = "zh-Hans"
+        return locale_code.replace('-', '_')
+
     def export_pattern_to_path(self, lang):
         translation = {}
         lang_info = []
-        for l in lang:
-            for value in self.files_source:
+        for value in self.files_source:
+            translation = {}
+            for l in lang:
                 path = value['source']
                 if '/' in path:
                     original_file_name = path[1:][path.rfind("/"):]
@@ -73,7 +111,6 @@ class Configuration(object):
 
                 file_extension = path.split(".")[-1]
 
-
                 pattern = {
                     '%original_file_name%': original_file_name,
                     '%original_path%': original_path,
@@ -83,19 +120,18 @@ class Configuration(object):
                     '%two_letters_code%': l['iso_639_1'],
                     '%three_letters_code%': l['iso_639_3'],
                     '%locale%': l['locale'],
-					'%crowdin_code%': l['crowdin_code'],
+                    '%crowdin_code%': l['crowdin_code'],
                     '%locale_with_underscore%': l['locale'].replace('-', '_'),
-                    # '%android_code%'           ; android_locale_code(lang['locale']),
-                    #'%osx_code%'               : osx_language_code(lang['crowdin_code']) + '.lproj',
+                    '%android_code%': self.android_locale_code(l['locale']),
+                    '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
                 }
-
 
                 path_lang = value['translation']
                 rep = dict((re.escape(k), v) for k, v in pattern.iteritems())
                 patter = re.compile("|".join(rep.keys()))
                 text = patter.sub(lambda m: rep[re.escape(m.group(0))], path_lang)
-                if not l['crowdin_code'] in translation:
-                    translation[l['crowdin_code']]=text
+                if not text in translation:
+                    translation[l['crowdin_code']] = text
 
                 if not path in lang_info:
                     lang_info.append(path)
@@ -116,13 +152,12 @@ class Connection(Configuration):
         valid_url += self.url['url_par3']
         if self.url['url_par4']: valid_url += '?key=' + self.get_api_key()
 
-
         response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files)
         if response.status_code != 200:
             return result_handling(response.text)
         # raise CliException(response.text)
         else:
-            #logger.info("Operation was successful")
+            # logger.info("Operation was successful")
             return response.content
             #return response.text
 

@@ -69,3 +69,5 @@ def upload_files(self):
 def download_project(self):
     return methods.Methods().download_project()
 
+# if __name__ == "__main__":
+#     Main()

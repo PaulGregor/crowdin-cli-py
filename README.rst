@@ -1,4 +1,4 @@
-Crowdin-cli-py
+﻿Crowdin-cli-py
 ==============
 
 
@@ -19,9 +19,7 @@ If you don't have ``pip``::
     (sudo) easy_install pip
     (sudo) pip install crowdin-cli-py
 	
-
-Configuration
--------------
+## Configuration
 
 When the tool is installed, you would have to configure your project. Basically, `crowdin-cli` go through project directory, and looks for `crowdin.yaml` file that contains project information.
 
@@ -56,8 +54,7 @@ files:
       * `%file_extension%` - Original file extension
       * `%file_name%` - File name without extension
 	  
-Usage
------
+## Usage
 
 When the configuration file is created, you are ready to start using `crowdin-cli` to manage your localization resources and automate files synchronization.
 
