@@ -11,8 +11,8 @@ with open('requirements.txt') as reqs:
     ]
 
 setup(
-    name='crowdin-cli',
-    version='0.35.2',
+    name='crowdin-cli-py',
+    version='0.40.1',
     author='PaulGregor',
     author_email='comixan@gmail.com',
     packages=['crowdin'],
@@ -37,7 +37,7 @@ setup(
     zip_safe=False,
     entry_points="""
     [console_scripts]
-    crowdin-cli = crowdin.cli:Main
+    crowdin-cli-py = crowdin.cli:Main
     """,
     install_requires=install_requires,
 )
