@@ -86,7 +86,7 @@ class Methods:
     def upload_files(self, files, export_patterns):
         # POST https://api.crowdin.com/api/project/{project-identifier}/add-file?key={project-key}
 
-        logger.info("Uploading source file to remote directory {0}".format(files))
+        logger.info("Uploading source file to remote directory: {0}".format(files))
 
         url = {'post': 'POST', 'url_par1': '/api/project/','url_par2': True,
                'url_par3': '/add-file', 'url_par4': True}
@@ -107,7 +107,7 @@ class Methods:
     def update_files(self, files, export_patterns):
         # POST https://api.crowdin.com/api/project/{project-identifier}/update-file?key={project-key}
 
-        logger.info("Updating source file in remote directory {0}".format(files))
+        logger.info("Updating source file in remote directory: {0}".format(files))
 
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/update-file', 'url_par4': True}
@@ -132,11 +132,13 @@ class Methods:
         params = {'json': 'json', 'language': language, 'auto_approve_imported': 1}
         if translations[0] == '/': ff = translations[1:]
         else: ff = translations
-
-        with open(ff, 'rb') as f:
-            api_files = {'files[{0}]'.format(source_file): f}
-            #print files
-            return Connection(url, params, api_files).connect()
+        try:
+            with open(ff, 'rb') as f:
+                api_files = {'files[{0}]'.format(source_file): f}
+                #print files
+                return Connection(url, params, api_files).connect()
+        except(OSError, IOError) as e:
+            print e, "\n Skipped"
 
     def upload_sources(self, dirss=False):
         dirs = []
@@ -188,6 +190,7 @@ class Methods:
         for i, source_file in zip(dic_info, info2[::2]):
             for language, item in i.iteritems():
                 self.upload_translations_files(item, language, source_file)
+                #print item, language, source_file
 
 
 
@@ -230,8 +233,8 @@ class Methods:
         #     print unmatched_files
 
 
-# for i in Methods().get_info_lang():
-#     print i['code']
+#print Methods().upload_translations()
+
 
 
 #Methods().upload_translations_files("/locale/sv/LC_MESSAGES/messages.pot", "Swedish")

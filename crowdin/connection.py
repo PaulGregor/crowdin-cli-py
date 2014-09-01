@@ -5,9 +5,15 @@ import re
 import logging
 import yaml
 import requests
+import fnmatch
 
 
-LOCATION_TO_CONFIGURATION_FILE = 'crowdin.yaml'
+
+home = os.path.expanduser("~") + "/crowdin.yaml"
+if os.path.isfile(home):
+    LOCATION_TO_CONFIGURATION_FILE = home
+else:
+    LOCATION_TO_CONFIGURATION_FILE = 'crowdin.yaml'
 
 logger = logging.getLogger('crowdin')
 
@@ -70,12 +76,83 @@ class Configuration(object):
     def get_base_path(self):
         return self.base_path
 
+    def get_doubled_asterisk(self, f_sources):
+        root = self.base_path.replace("\\", r'/')
+        if '**' in f_sources:
+            items = root + f_sources[:f_sources.rfind("**")]
+        else: items = root + f_sources[:f_sources.rfind('/')]
+        dirs_after = f_sources[2:][f_sources.rfind("**"):]
+        fg = dirs_after[:dirs_after.rfind("/")][1:]
+        return root, items, fg
+
     def get_files_source(self):
         sources = []
+        parametrs_list = []
         for f in self.files_source:
-            sources.append(f['source'])
-            sources.append(f['translation'])
-        return sources
+            ignore_list = []
+            parametrs = {}
+            root, items, fg = self.get_doubled_asterisk(f['source'])
+            file_name = f['source'][1:][f['source'].rfind("/"):]
+            if 'ignore' in f:
+                for ign in f['ignore']:
+                    root, items, fg = self.get_doubled_asterisk(ign)
+                    for dp, dn, filenames in os.walk(items):
+                        for ff in filenames:
+                            if fnmatch.fnmatch(ff, ign[ign.rfind('/'):][1:]):
+                                ignore_list.append('/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/'))
+
+            if '*' in file_name:
+                    if '**' in f['source']:
+                        #sources = [os.path.join(dp.strip(root), ff).replace("\\", r'/') for dp, dn, filenames in os.walk(items)
+                        #          for ff in filenames if os.path.splitext(ff)[1] == os.path.splitext(f['source'])[1]]
+
+                        for dp, dn, filenames in os.walk(items):
+                            for ff in filenames:
+                                if fnmatch.fnmatch(ff, f['source'][f['source'].rfind('/'):][1:]):
+                                    if fg in dp.replace("\\", r'/'):
+                                        fgg=''
+                                        if fg:fgg = '/'+fg
+                                        value = '/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/')
+                                        if not value in ignore_list:
+                                            sources.append(value)
+                                            sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
+
+                    else:
+                        #print items
+                        for dp, dn, filenames in os.walk(items):
+                            for ff in filenames:
+                                #if os.path.splitext(ff)[1] == os.path.splitext(f['source'])[1]:
+                                if fnmatch.fnmatch(ff, f['source'][f['source'].rfind('/'):][1:]):
+                                    value = '/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/')
+                                    if not value in ignore_list:
+                                        sources.append(value)
+                                        sources.append(f['translation'])
+
+            elif '**' in f['source']:
+                for dp, dn, filenames in os.walk(items):
+                    for ff in filenames:
+                        if ff == f['source'][f['source'].rfind('/'):][1:]:
+                            if fg in dp.replace("\\", r'/'):
+                                fgg=''
+                                if fg:fgg = '/'+fg
+                                value = '/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/')
+                                if not value in ignore_list:
+                                    sources.append(value)
+                                    sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
+
+            else:
+                sources.append(f['source'])
+                sources.append(f['translation'])
+
+            if 'first_line_contains_header' in f:
+                parametrs['first_line_contains_header'] = f['first_line_contains_header']
+            if 'scheme' in f:
+                parametrs['scheme'] = f['scheme']
+            if 'multilingual_spreadsheet' in f:
+                parametrs['multilingual_spreadsheet'] = f['multilingual_spreadsheet']
+
+            parametrs_list.append(parametrs)
+        return sources, parametrs_list
 
     def android_locale_code(self, locale_code):
         if locale_code == "he-IL":
@@ -94,12 +171,13 @@ class Configuration(object):
         return locale_code.replace('-', '_')
 
     def export_pattern_to_path(self, lang):
-        translation = {}
+        #translation = {}
         lang_info = []
-        for value in self.files_source:
+        get_sources_translations, params = self.get_files_source()
+        for value_source, value_translation in zip(get_sources_translations[::2], get_sources_translations[1::2]):
             translation = {}
             for l in lang:
-                path = value['source']
+                path = value_source
                 if '/' in path:
                     original_file_name = path[1:][path.rfind("/"):]
                     file_name = path[1:][path.rfind("/"):].split(".")[0]
@@ -126,7 +204,7 @@ class Configuration(object):
                     '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
                 }
 
-                path_lang = value['translation']
+                path_lang = value_translation
                 rep = dict((re.escape(k), v) for k, v in pattern.iteritems())
                 patter = re.compile("|".join(rep.keys()))
                 text = patter.sub(lambda m: rep[re.escape(m.group(0))], path_lang)
@@ -169,3 +247,6 @@ def result_handling(self):
         # raise CliException(self)
         logger.info("Operation was unsuccessful")
         print "Error code: {0}. Error message: {1}".format(data["error"]["code"], data["error"]["message"])
+
+
+#print Configuration().get_files_source()
