@@ -49,7 +49,11 @@ class Configuration(object):
             else:
                 print "api_key is required in config file."
                 exit()
-
+            if 'preserve_hierarchy' in config:
+                #print config['base_path']
+                self.preserve_hierarchy = config['preserve_hierarchy']
+            else:
+                self.preserve_hierarchy = False
             self.base_url = 'https://api.crowdin.com'
             if config['base_path']:
                 #print config['base_path']
@@ -85,17 +89,56 @@ class Configuration(object):
         fg = dirs_after[:dirs_after.rfind("/")][1:]
         return root, items, fg
 
+    #Func to get parameters from configuration file.
     def get_files_source(self):
         sources = []
-        parametrs_list = []
         for f in self.files_source:
             ignore_list = []
             parametrs = {}
+
+            if 'titles' in f:
+                parametrs['titles'] = f['titles']
+            if 'type' in f:
+                parametrs['type'] = f['type']
+            if 'translate_content' in f:
+                parametrs['translate_content'] = f['translate_content']
+            if 'translate_attributes' in f:
+                parametrs['translate_attributes'] = f['translate_attributes']
+
+            if 'content_segmentation' in f:
+                parametrs['content_segmentation'] = f['content_segmentation']
+            if 'translatable_elements' in f:
+                parametrs['translatable_elements'] = f['translatable_elements']
+            if 'update_option' in f:
+                parametrs['update_option'] = f['update_option']
+
+            if 'first_line_contains_header' in f:
+                parametrs['first_line_contains_header'] = f['first_line_contains_header']
+            if 'scheme' in f:
+                parametrs['scheme'] = f['scheme']
+            if 'multilingual_spreadsheet' in f:
+                parametrs['multilingual_spreadsheet'] = f['multilingual_spreadsheet']
+
+            if 'import_duplicates' in f:
+                parametrs['import_duplicates'] = f['import_duplicates']
+
+            if 'import_eq_suggestions' in f:
+                parametrs['import_eq_suggestions'] = f['import_eq_suggestions']
+
+            if 'auto_approve_imported' in f:
+                parametrs['auto_approve_imported'] = f['auto_approve_imported']
+
+            if 'languages_mapping' in f:
+                parametrs['languages_mapping'] = f['languages_mapping']
+
+
+
             root, items, fg = self.get_doubled_asterisk(f['source'])
             file_name = f['source'][1:][f['source'].rfind("/"):]
             if 'ignore' in f:
                 for ign in f['ignore']:
                     root, items, fg = self.get_doubled_asterisk(ign)
+                    #walk through folders and file in local directories
                     for dp, dn, filenames in os.walk(items):
                         for ff in filenames:
                             if fnmatch.fnmatch(ff, ign[ign.rfind('/'):][1:]):
@@ -116,6 +159,7 @@ class Configuration(object):
                                         if not value in ignore_list:
                                             sources.append(value)
                                             sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
+                                            sources.append(parametrs)
 
                     else:
                         #print items
@@ -127,6 +171,7 @@ class Configuration(object):
                                     if not value in ignore_list:
                                         sources.append(value)
                                         sources.append(f['translation'])
+                                        sources.append(parametrs)
 
             elif '**' in f['source']:
                 for dp, dn, filenames in os.walk(items):
@@ -139,20 +184,13 @@ class Configuration(object):
                                 if not value in ignore_list:
                                     sources.append(value)
                                     sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
+                                    sources.append(parametrs)
 
             else:
                 sources.append(f['source'])
                 sources.append(f['translation'])
-
-            if 'first_line_contains_header' in f:
-                parametrs['first_line_contains_header'] = f['first_line_contains_header']
-            if 'scheme' in f:
-                parametrs['scheme'] = f['scheme']
-            if 'multilingual_spreadsheet' in f:
-                parametrs['multilingual_spreadsheet'] = f['multilingual_spreadsheet']
-
-            parametrs_list.append(parametrs)
-        return sources, parametrs_list
+                sources.append(parametrs)
+        return sources
 
     def android_locale_code(self, locale_code):
         if locale_code == "he-IL":
@@ -173,8 +211,10 @@ class Configuration(object):
     def export_pattern_to_path(self, lang):
         #translation = {}
         lang_info = []
-        get_sources_translations, params = self.get_files_source()
-        for value_source, value_translation in zip(get_sources_translations[::2], get_sources_translations[1::2]):
+        get_sources_translations = self.get_files_source()
+        for value_source, value_translation, translations_params in zip(get_sources_translations[::3],
+                                                                        get_sources_translations[1::3],
+                                                                        get_sources_translations[2::3]):
             translation = {}
             for l in lang:
                 path = value_source
@@ -204,6 +244,15 @@ class Configuration(object):
                     '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
                 }
 
+                for i in translations_params['languages_mapping'].iteritems():
+                    rep = dict((re.escape(k), v) for k, v in i[1].iteritems())
+                    patter = re.compile("|".join(rep.keys()))
+                    true_key = ''.join(('%', i[0], '%'))
+                    for key, value in pattern.items():
+                        if key == true_key:
+                            pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
+
+
                 path_lang = value_translation
                 rep = dict((re.escape(k), v) for k, v in pattern.iteritems())
                 patter = re.compile("|".join(rep.keys()))
@@ -214,6 +263,7 @@ class Configuration(object):
                 if not path in lang_info:
                     lang_info.append(path)
                     lang_info.append(translation)
+                    lang_info.append(translations_params)
         return lang_info
 
 
@@ -229,15 +279,21 @@ class Connection(Configuration):
         if self.url['url_par2']: valid_url += self.get_project_identifier()
         valid_url += self.url['url_par3']
         if self.url['url_par4']: valid_url += '?key=' + self.get_api_key()
-
-        response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files)
-        if response.status_code != 200:
-            return result_handling(response.text)
-        # raise CliException(response.text)
+        try:
+            response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files)
+        except requests.exceptions.ConnectionError as e:
+            print "It seems that we have faced some connection problem. It's very sad, please make sure your " \
+                  "internet settings are correct."
+            logger.warning(e.args[0].reason)
+            exit()
         else:
-            # logger.info("Operation was successful")
-            return response.content
-            #return response.text
+            if response.status_code != 200:
+                return result_handling(response.text)
+            # raise CliException(response.text)
+            else:
+                # logger.info("Operation was successful")
+                return response.content
+                #return response.text
 
 
 def result_handling(self):

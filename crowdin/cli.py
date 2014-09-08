@@ -40,7 +40,10 @@ def Main():
 
     download_parser.set_defaults(func=download_project)
 
+    # A Export command
+    download_parser = subparsers.add_parser('export', help='Export Translations')
 
+    download_parser.set_defaults(func=export_translations)
 
     # A create command
     create_parser = subparsers.add_parser('create', help='Add directory to Crowdin project.')
@@ -68,6 +71,10 @@ def upload_files(self):
 
 def download_project(self):
     return methods.Methods().download_project()
+
+
+def export_translations(self):
+    return methods.Methods().export_translations()
 
 # if __name__ == "__main__":
 #     Main()

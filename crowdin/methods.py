@@ -4,7 +4,7 @@ import logging
 import json
 import zipfile
 import io
-#import os
+import os
 
 logger = logging.getLogger('crowdin')
 
@@ -73,8 +73,6 @@ class Methods:
 
     def create_directory(self, name):
         # POST https://api.crowdin.net/api/project/{project-identifier}/add-directory?key={project-key}
-
-
         logger.info("Creating remote directory {0}".format(name))
 
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
@@ -83,53 +81,74 @@ class Methods:
         return Connection(url, params).connect()
 
 
-    def upload_files(self, files, export_patterns):
+    def upload_files(self, files, export_patterns, parameters, item):
         # POST https://api.crowdin.com/api/project/{project-identifier}/add-file?key={project-key}
+        logger.info("Uploading source file to remote directory: {0}".format(item))
 
-        logger.info("Uploading source file to remote directory: {0}".format(files))
-
-        url = {'post': 'POST', 'url_par1': '/api/project/','url_par2': True,
+        url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/add-file', 'url_par4': True}
         # params = {'titles': kwargs['titles'], 'export_patterns': kwargs['export_patterns'],
         #           'type': kwargs['type'], 'json': json}
 
-        if files[0] == '/':ff = files[1:]
-        else: ff = files
-        params = {'json': json, 'export_patterns[{0}]'.format(ff): export_patterns}
+        if files[0] == '/': true_source = files[1:]
+        else: true_source = files
+        if item[0] == '/': not_true_source = item[1:]
+        else: not_true_source = item
+        if not true_source == not_true_source:
+            sources = not_true_source
+        else: sources = true_source
+
+        params = {'json': json, 'export_patterns[{0}]'.format(sources): export_patterns, 'titles[{0}]'.format(sources): parameters.get('titles'),
+                  'type': parameters.get('type'), 'first_line_contains_header': parameters.get('first_line_contains_header'),
+                  'scheme': parameters.get('scheme'), 'translate_content': parameters.get('translate_content'),
+                  'translate_attributes': parameters.get('translate_attributes'), 'content_segmentation': parameters.get('content_segmentation'),
+                  'translatable_elements': parameters.get('translatable_elements')}
         try:
-            with open(ff, 'rb') as f:
-                api_files = {'files[{0}]'.format(ff): f}
+            with open(true_source, 'rb') as f:
+                api_files = {'files[{0}]'.format(sources): f}
                 return Connection(url, params, api_files).connect()
         except(OSError, IOError) as e:
             print e, "\n Skipped"
 
 
-    def update_files(self, files, export_patterns):
+    def update_files(self, files, export_patterns, parameters, item):
         # POST https://api.crowdin.com/api/project/{project-identifier}/update-file?key={project-key}
-
-        logger.info("Updating source file in remote directory: {0}".format(files))
+        logger.info("Updating source file in remote directory: {0}".format(item))
 
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/update-file', 'url_par4': True}
 
-        if files[0] == '/' :ff = files[1:]
-        else: ff = files
-        params = {'json': json, 'export_patterns[{0}]'.format(ff): export_patterns}
+        if files[0] == '/': true_source = files[1:]
+        else: true_source = files
+        if item[0] == '/': not_true_source = item[1:]
+        else: not_true_source = item
+        if not true_source == not_true_source:
+            sources = not_true_source
+        else: sources = true_source
+
+        params = {'json': json, 'export_patterns[{0}]'.format(sources): export_patterns, 'titles[{0}]'.format(sources): parameters.get('titles'),
+                  'type': parameters.get('type'), 'first_line_contains_header': parameters.get('first_line_contains_header'),
+                  'scheme': parameters.get('scheme'), 'translate_content': parameters.get('translate_content'),
+                  'translate_attributes': parameters.get('translate_attributes'), 'content_segmentation': parameters.get('content_segmentation'),
+                  'translatable_elements': parameters.get('translatable_elements')}
         try:
-            with open(ff, 'rb') as f:
-                api_files = {'files[{0}]'.format(ff): f}
+            with open(true_source, 'rb') as f:
+                api_files = {'files[{0}]'.format(sources): f}
                 #print files
                 return Connection(url, params, api_files).connect()
         except(OSError, IOError) as e:
             print e, "\n Skipped"
 
-    def upload_translations_files(self, translations, language, source_file):
+    def upload_translations_files(self, translations, language, source_file, parameters):
         # POST https://api.crowdin.com/api/project/{project-identifier}/upload-translation?key={project-key
 
         logger.info("Uploading {0} translation for source file: {1}".format(language, source_file))
 
         url = dict(post='POST', url_par1='/api/project/', url_par2=True, url_par3='/upload-translation', url_par4=True)
-        params = {'json': 'json', 'language': language, 'auto_approve_imported': 1}
+        params = {'json': 'json', 'language': language,
+                  'auto_approve_imported': parameters.get('auto_approve_imported', '0'),
+                  'import_eq_suggestions': parameters.get('import_eq_suggestions', '0'),
+                  'import_duplicates': parameters.get('import_duplicates', '0')}
         if translations[0] == '/': ff = translations[1:]
         else: ff = translations
         try:
@@ -139,6 +158,13 @@ class Methods:
                 return Connection(url, params, api_files).connect()
         except(OSError, IOError) as e:
             print e, "\n Skipped"
+
+    def preserve_hierarchy(self, common_path):
+        preserve_hierarchy = Configuration().preserve_hierarchy
+        if preserve_hierarchy is False:
+            common_path = [s.replace(os.path.commonprefix(common_path)[:-1], '', 1) for s in common_path]
+        return common_path
+
 
     def upload_sources(self, dirss=False):
         dirs = []
@@ -158,12 +184,18 @@ class Methods:
 
             if not item.endswith("/"):
                 files.append(item)
+
         all_info = Configuration().get_files_source()
-        info2 = self.exists(all_info[::2])
-        for item, export_patterns in zip(info2, all_info[1::2]):
+        common_path = self.preserve_hierarchy(all_info[::3])
+        sources_path = self.exists(common_path)
+        translations_path = all_info[1::3]
+        sources_parameters = all_info[2::3]
+
+        for item, export_patterns, true_path, parameters in zip(sources_path, translations_path,
+                                                                all_info[::3], sources_parameters):
             if '/' in item and not item[:item.rfind("/")] in dirs:
                 items = item[:item.rfind("/")]
-
+                #print items
                 p = "/"
                 l = items[1:].split("/")
                 i = 0
@@ -173,24 +205,30 @@ class Methods:
                     if not p in dirs:
                         dirs.append(p)
                         self.create_directory(p)
+
             if item[0] != '/': ite="/"+item
             else: ite = item
 
             if not ite in files:
-                self.upload_files(item, export_patterns)
+                self.upload_files(true_path, export_patterns, parameters, item)
             else:
-                self.update_files(item, export_patterns)
+                self.update_files(true_path, export_patterns, parameters, item)
         if dirss:
             return dirs
 
 
     def upload_translations(self):
         info2 = Configuration().export_pattern_to_path(self.lang())
-        dic_info = info2[1::2]
-        for i, source_file in zip(dic_info, info2[::2]):
+
+        translations_language = info2[1::3]
+        translations_path = self.preserve_hierarchy(info2[::3])
+        translations_parameters = info2[2::3]
+
+
+        for i, source_file, params in zip(translations_language, translations_path, translations_parameters):
             for language, item in i.iteritems():
-                self.upload_translations_files(item, language, source_file)
-                #print item, language, source_file
+                self.upload_translations_files(item, language, source_file, params)
+                #print item, language, source_file, params
 
 
 
@@ -232,6 +270,14 @@ class Methods:
         #                  "configuration. Some of the resulted files will be omitted.")
         #     print unmatched_files
 
+    def export_translations(self):
+        #GET https://api.crowdin.com/api/project/{project-identifier}/export?key={project-key}
+        logger.info("Export Translations:")
+        url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
+               'url_par3': '/export', 'url_par4': True}
+        params = {'json': 'json'}
+        data = json.loads(Connection(url, params).connect())
+        print data["success"]["status"]
 
 #print Methods().upload_translations()
 
