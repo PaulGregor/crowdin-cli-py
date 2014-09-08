@@ -243,14 +243,14 @@ class Configuration(object):
                     '%android_code%': self.android_locale_code(l['locale']),
                     '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
                 }
-
-                for i in translations_params['languages_mapping'].iteritems():
-                    rep = dict((re.escape(k), v) for k, v in i[1].iteritems())
-                    patter = re.compile("|".join(rep.keys()))
-                    true_key = ''.join(('%', i[0], '%'))
-                    for key, value in pattern.items():
-                        if key == true_key:
-                            pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
+                if 'languages_mapping' in translations_params:
+                    for i in translations_params['languages_mapping'].iteritems():
+                        rep = dict((re.escape(k), v) for k, v in i[1].iteritems())
+                        patter = re.compile("|".join(rep.keys()))
+                        true_key = ''.join(('%', i[0], '%'))
+                        for key, value in pattern.items():
+                            if key == true_key:
+                                pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
 
 
                 path_lang = value_translation
