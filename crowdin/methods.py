@@ -10,12 +10,22 @@ logger = logging.getLogger('crowdin')
 
 
 class Methods:
+    def __init__(self, any_options, options_config):
+        #Get options arguments from console input
+        self.any_options = any_options
+        #Get parsed config file
+        self.options_config = options_config
+
+    #Main connection method to interact with connection.py
+    def true_connection(self, url, params, api_files=None):
+        return Connection(self.options_config, url, params, api_files).connect()
+
     def get_info(self):
         # POST https://api.crowdin.com/api/project/{project-identifier}/info?key={project-key}
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/info', 'url_par4': True}
         params = {'json': 'json'}
-        data = json.loads(Connection(url, params).connect())
+        data = json.loads(self.true_connection(url, params))
 
         return data['files']
 
@@ -24,14 +34,11 @@ class Methods:
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/info', 'url_par4': True}
         params = {'json': 'json'}
-        data = json.loads(Connection(url, params).connect())
+        data = json.loads(self.true_connection(url, params))
         #for key, value in data.iteritems():
         #    if key == "languages":
         #        print value[]
-        lang = []
-        for langs in data['languages']:
-            lang.append(langs)
-        return lang
+        return data['languages']
 
     def lang(self):
         languages_list = []
@@ -43,16 +50,12 @@ class Methods:
                     languages_list.append(i)
         return languages_list
 
-
-
-
     def exists(self, name):
         for f in name:
             for i in f.split():
                 yield i
 
-
-    # def test(self, tre):
+    #def list_sources(self):
     # for i in tre:
     #         print u'├─ ' + i['name']
     #         if isinstance(i, dict):
@@ -70,7 +73,6 @@ class Methods:
                         node.get('files'), parent + '/' + node.get('name')):
                     yield result
 
-
     def create_directory(self, name):
         # POST https://api.crowdin.net/api/project/{project-identifier}/add-directory?key={project-key}
         logger.info("Creating remote directory {0}".format(name))
@@ -78,8 +80,7 @@ class Methods:
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/add-directory', 'url_par4': True}
         params = {'name': name, 'json': 'json'}
-        return Connection(url, params).connect()
-
+        return self.true_connection(url, params)
 
     def upload_files(self, files, export_patterns, parameters, item):
         # POST https://api.crowdin.com/api/project/{project-identifier}/add-file?key={project-key}
@@ -87,8 +88,6 @@ class Methods:
 
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/add-file', 'url_par4': True}
-        # params = {'titles': kwargs['titles'], 'export_patterns': kwargs['export_patterns'],
-        #           'type': kwargs['type'], 'json': json}
 
         if files[0] == '/': true_source = files[1:]
         else: true_source = files
@@ -106,10 +105,9 @@ class Methods:
         try:
             with open(true_source, 'rb') as f:
                 api_files = {'files[{0}]'.format(sources): f}
-                return Connection(url, params, api_files).connect()
+                return self.true_connection(url, params, api_files)
         except(OSError, IOError) as e:
             print e, "\n Skipped"
-
 
     def update_files(self, files, export_patterns, parameters, item):
         # POST https://api.crowdin.com/api/project/{project-identifier}/update-file?key={project-key}
@@ -135,7 +133,7 @@ class Methods:
             with open(true_source, 'rb') as f:
                 api_files = {'files[{0}]'.format(sources): f}
                 #print files
-                return Connection(url, params, api_files).connect()
+                return self.true_connection(url, params, api_files)
         except(OSError, IOError) as e:
             print e, "\n Skipped"
 
@@ -155,21 +153,20 @@ class Methods:
             with open(ff, 'rb') as f:
                 api_files = {'files[{0}]'.format(source_file): f}
                 #print files
-                return Connection(url, params, api_files).connect()
+                return self.true_connection(url, params, api_files)
         except(OSError, IOError) as e:
             print e, "\n Skipped"
 
     def preserve_hierarchy(self, common_path):
-        preserve_hierarchy = Configuration().preserve_hierarchy
-        if preserve_hierarchy is False:
+        preserve_hierarchy = Configuration(self.options_config).preserve_hierarchy
+        if preserve_hierarchy is False and len(common_path) >= 2:
             common_path = [s.replace(os.path.commonprefix(common_path)[:-1], '', 1) for s in common_path]
         return common_path
-
 
     def upload_sources(self, dirss=False):
         dirs = []
         files = []
-        info1 = Methods().parse(Methods().get_info())
+        info1 = self.parse(self.get_info())
         for item in info1:
 
             p = "/"
@@ -185,7 +182,7 @@ class Methods:
             if not item.endswith("/"):
                 files.append(item)
 
-        all_info = Configuration().get_files_source()
+        all_info = Configuration(self.options_config).get_files_source()
         common_path = self.preserve_hierarchy(all_info[::3])
         sources_path = self.exists(common_path)
         translations_path = all_info[1::3]
@@ -205,7 +202,12 @@ class Methods:
                     if not p in dirs:
                         dirs.append(p)
                         self.create_directory(p)
-
+            if parameters.get('dest'):
+                if '/' in item:
+                    items = item[item.rfind("/"):]
+                    item = parameters.get('dest').join(item.rsplit(items, 1))
+                else:
+                    item = parameters.get('dest')
             if item[0] != '/': ite="/"+item
             else: ite = item
 
@@ -216,21 +218,23 @@ class Methods:
         if dirss:
             return dirs
 
-
     def upload_translations(self):
-        info2 = Configuration().export_pattern_to_path(self.lang())
+        info2 = Configuration(self.options_config).export_pattern_to_path(self.lang())
 
         translations_language = info2[1::3]
         translations_path = self.preserve_hierarchy(info2[::3])
         translations_parameters = info2[2::3]
 
-
         for i, source_file, params in zip(translations_language, translations_path, translations_parameters):
             for language, item in i.iteritems():
+                if params.get('dest'):
+                    if '/' in item:
+                        items = source_file[source_file.rfind("/"):]
+                        source_file = params.get('dest').join(source_file.rsplit(items, 1))
+                    else:
+                        source_file = params.get('dest')
                 self.upload_translations_files(item, language, source_file, params)
                 #print item, language, source_file, params
-
-
 
     def supported_languages(self):
         # GET https://api.crowdin.com/api/supported-languages
@@ -238,7 +242,7 @@ class Methods:
         url = {'post': 'POST', 'url_par1': '/api/', 'url_par2': False,
                'url_par3': 'supported-languages', 'url_par4': False}
         params = {'json': 'json'}
-        return Connection(url, params).connect()
+        return self.true_connection(url, params)
 
     def download_project(self):
         # GET https://api.crowdin.com/api/project/{project-identifier}/download/{package}.zip?key={project-key}
@@ -252,13 +256,13 @@ class Methods:
         # files that exists in archive and doesn't match current project configuration
         unmatched_files = []
 
-        with zipfile.ZipFile(io.BytesIO(Connection(url, params).connect())) as z:
+        with zipfile.ZipFile(io.BytesIO(self.true_connection( url, params))) as z:
             #for i in self.exists(Configuration().get_files_source()):
 
             for structure in z.namelist():
-                    # if structure.endswith(i):
-                    #     # with open(os.path.join(i[1:][:i.rfind("/")], os.path.basename(structure)), 'wb') as f:
-                    #     #     f.write(z.read(structure))
+                # if structure.endswith(i):
+                #     # with open(os.path.join(i[1:][:i.rfind("/")], os.path.basename(structure)), 'wb') as f:
+                #     #     f.write(z.read(structure))
                 if not structure.endswith("/"):
                     logger.info("{0}".format(structure))
                     z.extract(structure)
@@ -270,17 +274,30 @@ class Methods:
         #                  "configuration. Some of the resulted files will be omitted.")
         #     print unmatched_files
 
-    def export_translations(self):
+    def build_project(self):
         #GET https://api.crowdin.com/api/project/{project-identifier}/export?key={project-key}
-        logger.info("Export Translations:")
+        logger.info("Build project:")
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/export', 'url_par4': True}
         params = {'json': 'json'}
-        data = json.loads(Connection(url, params).connect())
+        data = json.loads(self.true_connection(url, params))
         print data["success"]["status"]
 
-#print Methods().upload_translations()
+    def list_project_files(self):
+        #print self.any_options
+        if self.any_options.sources == 'project':
+            project_files = self.parse(self.get_info())
+            for i in project_files:
+                print i
+        if self.any_options.sources == 'sources':
+            sources_files = Configuration(self.options_config).get_files_source()
+            for i in sources_files[::3]:
+                print i
+        if self.any_options.sources == 'translations':
+            translations_file = Configuration(self.options_config).export_pattern_to_path(self.lang())
+            for i in translations_file[1::3]:
+                for key, value in i.iteritems():
+                    print value
 
-
-
-#Methods().upload_translations_files("/locale/sv/LC_MESSAGES/messages.pot", "Swedish")
+    def test(self):
+        print Configuration(self.options_config).get_files_source()

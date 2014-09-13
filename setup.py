@@ -1,7 +1,7 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from setuptools import setup
 
-with open('README.rst') as readme:
+with open('README.md') as readme:
     long_description = readme.read()
 
 with open('requirements.txt') as reqs:
@@ -12,7 +12,7 @@ with open('requirements.txt') as reqs:
 
 setup(
     name='crowdin-cli-py',
-    version='0.85.3',
+    version='0.88.1',
     author='PaulGregor',
     author_email='comixan@gmail.com',
     packages=['crowdin'],
@@ -37,7 +37,7 @@ setup(
     zip_safe=False,
     entry_points="""
     [console_scripts]
-    crowdin-cli-py = crowdin.cli:Main
+    crowdin-cli-py = crowdin.cli:start_cli
     """,
     install_requires=install_requires,
 )

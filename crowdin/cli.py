@@ -1,80 +1,158 @@
-﻿import argparse
+﻿# -*- coding: utf-8 -*-
+from __init__ import __version__
+import argparse
 import gettext
 import methods
 import logging
 import os
+import sys
+import yaml
 
 
-def Main():
-    level = logging.DEBUG
-    formatter = logging.Formatter('%(message)s')
-    logger = logging.getLogger('crowdin')
-    logger.setLevel(level)
+class Main:
+    def __init__(self):
+        level = logging.DEBUG
+        formatter = logging.Formatter('%(message)s')
+        logger = logging.getLogger('crowdin')
+        logger.setLevel(level)
 
-    console = logging.StreamHandler()
-    console.setLevel(level)
-    console.setFormatter(formatter)
+        console = logging.StreamHandler()
+        console.setLevel(level)
+        console.setFormatter(formatter)
 
-    logger.addHandler(console)
+        logger.addHandler(console)
 
-    l_dir = os.path.dirname(os.path.realpath(__file__)) + "/locales"
+        l_dir = os.path.dirname(os.path.realpath(__file__)) + "/locales"
 
-    loc = gettext.translation('cli', l_dir, languages=['en'])
-    _ = loc.ugettext
-    loc.install()
+        loc = gettext.translation('cli', l_dir, languages=['en'])
+        _ = loc.ugettext
+        loc.install()
+        #print "__init__ cli"
 
-    parser = argparse.ArgumentParser(description=_("desc"), )
+    def main(self):
+        parser = argparse.ArgumentParser(prog='crowdin-cli-py', formatter_class=argparse.RawDescriptionHelpFormatter,
+                                         description=('''\
+NAME:
+    Crowdin-cli-py {0}
 
-    subparsers = parser.add_subparsers(help='commands')
+    This tool requires configuration file to be created.
+    See http://crowdin.com/page/cli-tool#configuration-file for more details.
 
-    # A upload command
-    upload_parser = subparsers.add_parser('upload', help='Upload filles to the server')
-    upload_parser.add_argument('sources', action='store', help='Sources filles', nargs='?')
-    upload_parser.add_argument('translations', action='store', help='Translations filles', nargs='?')
+SYNOPSIS:
+    crowdin-cli-py [global options] command [command option]
 
-    upload_parser.set_defaults(func=upload_files)
+VERSION:
+    {1}                                     ''').format(_("desc"), __version__))
+
+        parser._optionals.title = 'GLOBAL OPTIONS'
+
+        parser.add_argument('-c', '--config', action='store', dest='config', help='- Project-specific configuration file')
+        parser.add_argument('--identity', action='store', dest='identity', help='- User-specific configuration file with '
+                                                                                'API credentials')
+
+        subparsers = parser.add_subparsers(title='COMMANDS')
+
+        # A upload command
+        upload_parser = subparsers.add_parser('upload', help='Upload files to the server')
+        upload_parser.add_argument('sources', action='store', help='This argument uploads sources files', nargs='?')
+        upload_parser.add_argument('translations', action='store', help='This argument uploads translations files', nargs='?')
+
+        upload_parser.set_defaults(func=self.upload_files)
+
+        # A list command
+        list_parser = subparsers.add_parser('list', help='List information about the files')
+        list_parser.add_argument('sources', action='store', help='List information about the sources files in current '
+                                                                 'project.', nargs='?')
+        list_parser.add_argument('translations', action='store', help='List information about the translations '
+                                                                      'files in current project.', nargs='?')
+        list_parser.add_argument('project', action='store', help='List information about the files that already '
+                                                                 'exists in current project', nargs='?')
+        list_parser.add_argument('--tree', dest='tree', help='Built a tree like view')
+
+        list_parser.set_defaults(func=self.list_files)
+
+        # A download command
+        download_parser = subparsers.add_parser('download', help='Download projects files')
+        download_parser.set_defaults(func=self.download_project)
+
+        # A Build project command
+        export_parser = subparsers.add_parser('build', help='Export Translations')
+        export_parser.set_defaults(func=self.build_project)
+
+        #A test command
+        #test_parser = subparsers.add_parser('test', help='Test Crowdin project.')
+        #test_parser.add_argument('dirname', action='store', help='New directory to create')
+        #test_parser.set_defaults(func=self.test)
+
+        if len(sys.argv) == 1:
+            parser.print_help()
+            sys.exit(1)
+
+        #results = parser.parse_args()
+        #print results.config
+
+        if "upload" in sys.argv and not "sources" in sys.argv and not "translations" in sys.argv:
+            upload_parser.print_help()
+            sys.exit(1)
+        if "list" in sys.argv and not "sources" in sys.argv and not "translations" in \
+                sys.argv and not "project" in sys.argv:
+            list_parser.print_help()
+            sys.exit(1)
+        # print args.identity
+        #print "I'm method main"
+        args = parser.parse_args()
+        args.func(args)
+
+    def test(self, test):
+        return methods.Methods(test, self.open_file(test)).test()
+    #Can't Take My Eyes Off You
+
+    def upload_files(self, upload):
+        if upload.sources == "sources":
+            return methods.Methods(upload, self.open_file(upload)).upload_sources()
+        if upload.sources == "translations":
+            return methods.Methods(upload, self.open_file(upload)).upload_translations()
+
+    def list_files(self, list_f):
+        return methods.Methods(list_f, self.open_file(list_f)).list_project_files()
+
+    def download_project(self, download):
+        return methods.Methods(download, self.open_file(download)).download_project()
+
+    def build_project(self, build):
+        return methods.Methods(build, self.open_file(build)).build_project()
+
+    def open_file(self, options_config):
+        # reading configuration file
+        location_to_configuration_file = 'crowdin.yaml'
+        home = os.path.expanduser("~") + "/.crowdin.yaml"
+
+        if options_config.config:
+            location_to_configuration_file = options_config.config
+        if options_config.identity:
+            home = options_config.identity
+        try:
+            fh = open(location_to_configuration_file, "r")
+            config = yaml.load(fh)
+            if os.path.isfile(home):
+                fhh = open(home, "r")
+                config_api = yaml.load(fhh)
+                if config_api.get('api_key'):
+                    config['api_key'] = config_api.get('api_key')
+                if config_api.get('project_identifier'):
+                    config['project_identifier'] = config_api.get('project_identifier')
+                fhh.close()
+            #print "I'M robot method open file"
+            fh.close()
+        except(OSError, IOError) as e:
+            print e, "\n Please check your config file"
+            exit()
+        else:
+            return config
+
+if __name__ == "__main__":
+    Main().main()
 
 
-    # A download command
-    download_parser = subparsers.add_parser('download', help='Download projects files')
-
-    download_parser.set_defaults(func=download_project)
-
-    # A Export command
-    download_parser = subparsers.add_parser('export', help='Export Translations')
-
-    download_parser.set_defaults(func=export_translations)
-
-    # A create command
-    create_parser = subparsers.add_parser('create', help='Add directory to Crowdin project.')
-    create_parser.add_argument('dirname', action='store', help='New directory to create')
-
-    create_parser.set_defaults(func=create_directory)
-
-    args = parser.parse_args()
-    args.func(args)
-
-
-def create_directory(self):
-    return methods.Methods().create_directory(self.dirname)
-
-
-def upload_files(self):
-    if self.sources == "sources":
-        return methods.Methods().upload_sources()
-    if self.sources == "translations":
-        return methods.Methods().upload_translations()
-
-
-    # print methods.Methods().upload_files(string.dirname, string.json, string.jsonp)
-
-
-def download_project(self):
-    return methods.Methods().download_project()
-
-
-def export_translations(self):
-    return methods.Methods().export_translations()
-
-# if __name__ == "__main__":
-#     Main()
+def start_cli():
+    Main().main()

@@ -3,17 +3,8 @@ import json
 import os
 import re
 import logging
-import yaml
 import requests
 import fnmatch
-
-
-
-home = os.path.expanduser("~") + "/crowdin.yaml"
-if os.path.isfile(home):
-    LOCATION_TO_CONFIGURATION_FILE = home
-else:
-    LOCATION_TO_CONFIGURATION_FILE = 'crowdin.yaml'
 
 logger = logging.getLogger('crowdin')
 
@@ -23,50 +14,40 @@ class CliException(Exception):
 
 
 class Configuration(object):
-    def __init__(self):
+    def __init__(self, options_config):
+        #print "__init__ configurations"
+        config = options_config     # assigning configuration values
 
-        # reading configuration file
-        try:
-            fh = open(LOCATION_TO_CONFIGURATION_FILE, "r")
-            config = yaml.load(fh)
-        except(OSError, IOError) as e:
-            print e, "\n Please check your config file"
-            exit()
-
+        # print "Reading configuration from the file was successful"
+        if config.get('project_identifier'):
+            self.project_identifier = config['project_identifier']
         else:
-
-            fh.close()
-
-            # assigning configuration values
-            # print "Reading configuration from the file was successful"
-            if config['project_identifier']:
-                self.project_identifier = config['project_identifier']
-            else:
-                print "project_identifier is required in config file."
-                exit()
-            if config['api_key']:
-                self.api_key = config['api_key']
-            else:
-                print "api_key is required in config file."
-                exit()
-            if 'preserve_hierarchy' in config:
-                #print config['base_path']
-                self.preserve_hierarchy = config['preserve_hierarchy']
-            else:
-                self.preserve_hierarchy = False
-            self.base_url = 'https://api.crowdin.com'
-            if config['base_path']:
-                #print config['base_path']
-                self.base_path = config['base_path']
-            else:
-                self.base_path = os.getcwd()
-            # self.files_source = config['files'][0]['source']
-            if config['files']:
-                self.files_source = config['files']
-            else:
-                print "You didn't set any files in your config. It's very sad."
-
-
+            print "Hey, it seems like project_identifier is missing in config file. " \
+                  "You need to fix it."
+            exit()
+        if config.get('api_key'):
+            self.api_key = config['api_key']
+        else:
+            print "Hey, it seems like api_key is missing in config file. " \
+                  "You need to fix it."
+            exit()
+        if 'preserve_hierarchy' in config:
+            #print config['base_path']
+            self.preserve_hierarchy = config['preserve_hierarchy']
+        else:
+            self.preserve_hierarchy = False
+        self.base_url = 'https://api.crowdin.com'
+        if config.get('base_path'):
+            #print config['base_path']
+            self.base_path = config['base_path']
+        else:
+            self.base_path = os.getcwd()
+        # self.files_source = config['files'][0]['source']
+        if config.get('files'):
+            self.files_source = config['files']
+        else:
+            print "You didn't set any files in your config. It's very sad."
+            exit()
 
     def get_project_identifier(self):
         return self.project_identifier
@@ -89,49 +70,50 @@ class Configuration(object):
         fg = dirs_after[:dirs_after.rfind("/")][1:]
         return root, items, fg
 
-    #Func to get parameters from configuration file.
+    #Method for getting parameters from configuration file.
     def get_files_source(self):
         sources = []
         for f in self.files_source:
             ignore_list = []
-            parametrs = {}
+            parameters = {}
 
             if 'titles' in f:
-                parametrs['titles'] = f['titles']
+                parameters['titles'] = f['titles']
             if 'type' in f:
-                parametrs['type'] = f['type']
+                parameters['type'] = f['type']
             if 'translate_content' in f:
-                parametrs['translate_content'] = f['translate_content']
+                parameters['translate_content'] = f['translate_content']
             if 'translate_attributes' in f:
-                parametrs['translate_attributes'] = f['translate_attributes']
+                parameters['translate_attributes'] = f['translate_attributes']
 
             if 'content_segmentation' in f:
-                parametrs['content_segmentation'] = f['content_segmentation']
+                parameters['content_segmentation'] = f['content_segmentation']
             if 'translatable_elements' in f:
-                parametrs['translatable_elements'] = f['translatable_elements']
+                parameters['translatable_elements'] = f['translatable_elements']
             if 'update_option' in f:
-                parametrs['update_option'] = f['update_option']
+                parameters['update_option'] = f['update_option']
 
             if 'first_line_contains_header' in f:
-                parametrs['first_line_contains_header'] = f['first_line_contains_header']
+                parameters['first_line_contains_header'] = f['first_line_contains_header']
             if 'scheme' in f:
-                parametrs['scheme'] = f['scheme']
+                parameters['scheme'] = f['scheme']
             if 'multilingual_spreadsheet' in f:
-                parametrs['multilingual_spreadsheet'] = f['multilingual_spreadsheet']
+                parameters['multilingual_spreadsheet'] = f['multilingual_spreadsheet']
 
             if 'import_duplicates' in f:
-                parametrs['import_duplicates'] = f['import_duplicates']
+                parameters['import_duplicates'] = f['import_duplicates']
 
             if 'import_eq_suggestions' in f:
-                parametrs['import_eq_suggestions'] = f['import_eq_suggestions']
+                parameters['import_eq_suggestions'] = f['import_eq_suggestions']
 
             if 'auto_approve_imported' in f:
-                parametrs['auto_approve_imported'] = f['auto_approve_imported']
+                parameters['auto_approve_imported'] = f['auto_approve_imported']
 
             if 'languages_mapping' in f:
-                parametrs['languages_mapping'] = f['languages_mapping']
+                parameters['languages_mapping'] = f['languages_mapping']
 
-
+            if 'dest' in f:
+                parameters['dest'] = f['dest']
 
             root, items, fg = self.get_doubled_asterisk(f['source'])
             file_name = f['source'][1:][f['source'].rfind("/"):]
@@ -159,7 +141,7 @@ class Configuration(object):
                                         if not value in ignore_list:
                                             sources.append(value)
                                             sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
-                                            sources.append(parametrs)
+                                            sources.append(parameters)
 
                     else:
                         #print items
@@ -171,7 +153,7 @@ class Configuration(object):
                                     if not value in ignore_list:
                                         sources.append(value)
                                         sources.append(f['translation'])
-                                        sources.append(parametrs)
+                                        sources.append(parameters)
 
             elif '**' in f['source']:
                 for dp, dn, filenames in os.walk(items):
@@ -184,12 +166,12 @@ class Configuration(object):
                                 if not value in ignore_list:
                                     sources.append(value)
                                     sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
-                                    sources.append(parametrs)
+                                    sources.append(parameters)
 
             else:
                 sources.append(f['source'])
                 sources.append(f['translation'])
-                sources.append(parametrs)
+                sources.append(parameters)
         return sources
 
     def android_locale_code(self, locale_code):
@@ -244,14 +226,19 @@ class Configuration(object):
                     '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
                 }
                 if 'languages_mapping' in translations_params:
-                    for i in translations_params['languages_mapping'].iteritems():
-                        rep = dict((re.escape(k), v) for k, v in i[1].iteritems())
-                        patter = re.compile("|".join(rep.keys()))
-                        true_key = ''.join(('%', i[0], '%'))
-                        for key, value in pattern.items():
-                            if key == true_key:
-                                pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
-
+                    try:
+                        for i in translations_params['languages_mapping'].iteritems():
+                            if not i[1] is None:
+                                rep = dict((re.escape(k), v) for k, v in i[1].iteritems())
+                                patter = re.compile("|".join(rep.keys()))
+                                true_key = ''.join(('%', i[0], '%'))
+                                for key, value in pattern.items():
+                                    if key == true_key:
+                                        pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
+                    except Exception as e:
+                        print e
+                        print 'It seems that languages_mapping is not set correctly'
+                        exit()
 
                 path_lang = value_translation
                 rep = dict((re.escape(k), v) for k, v in pattern.iteritems())
@@ -268,8 +255,9 @@ class Configuration(object):
 
 
 class Connection(Configuration):
-    def __init__(self, url, params, api_files=None):
-        super(Connection, self).__init__()
+    def __init__(self, options_config, url, params,  api_files=None):
+        super(Connection, self).__init__(options_config)
+        #print "__init__ connection"
         self.url = url
         self.params = params
         self.files = api_files
@@ -282,8 +270,8 @@ class Connection(Configuration):
         try:
             response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files)
         except requests.exceptions.ConnectionError as e:
-            print "It seems that we have faced some connection problem. It's very sad, please make sure your " \
-                  "internet settings are correct."
+            print "It seems that we have faced some connection problem. It's very sad, please make sure you " \
+                  "have access to internet."
             logger.warning(e.args[0].reason)
             exit()
         else:
@@ -305,4 +293,3 @@ def result_handling(self):
         print "Error code: {0}. Error message: {1}".format(data["error"]["code"], data["error"]["message"])
 
 
-#print Configuration().get_files_source()
