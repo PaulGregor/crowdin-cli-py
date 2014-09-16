@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __init__ import __version__
 import argparse
 import gettext
@@ -67,7 +67,7 @@ VERSION:
                                                                       'files in current project.', nargs='?')
         list_parser.add_argument('project', action='store', help='List information about the files that already '
                                                                  'exists in current project', nargs='?')
-        list_parser.add_argument('--tree', dest='tree', help='Built a tree like view')
+        list_parser.add_argument('--tree', action='store_true', dest='tree', default=False, help='Built a tree like view')
 
         list_parser.set_defaults(func=self.list_files)
 

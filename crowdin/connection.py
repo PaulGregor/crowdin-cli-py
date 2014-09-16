@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import json
 import os
 import re
@@ -36,7 +36,10 @@ class Configuration(object):
             self.preserve_hierarchy = config['preserve_hierarchy']
         else:
             self.preserve_hierarchy = False
-        self.base_url = 'https://api.crowdin.com'
+        if config.get('base_url'):
+            self.base_url = config['base_url']
+        else:
+            self.base_url = 'https://api.crowdin.com'
         if config.get('base_path'):
             #print config['base_path']
             self.base_path = config['base_path']
