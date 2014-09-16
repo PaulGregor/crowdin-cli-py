@@ -30,27 +30,36 @@ class Main:
         #print "__init__ cli"
 
     def main(self):
-        parser = argparse.ArgumentParser(prog='crowdin-cli-py', formatter_class=argparse.RawDescriptionHelpFormatter,
+        parser = argparse.ArgumentParser(prog='crowdin-cli-py', add_help=False, usage=argparse.SUPPRESS, formatter_class=argparse.RawDescriptionHelpFormatter,
                                          description=('''\
 NAME:
     Crowdin-cli-py {0}
 
     This tool requires configuration file to be created.
-    See http://crowdin.com/page/cli-tool#configuration-file for more details.
+    See https://crowdin.com/page/cli-tool#configuration-file for more details.
 
 SYNOPSIS:
-    crowdin-cli-py [global options] command [command option]
+    crowdin-cli-py [global options] command [command option] [arguments...]
 
 VERSION:
     {1}                                     ''').format(_("desc"), __version__))
 
         parser._optionals.title = 'GLOBAL OPTIONS'
 
-        parser.add_argument('-c', '--config', action='store', dest='config', help='- Project-specific configuration file')
-        parser.add_argument('--identity', action='store', dest='identity', help='- User-specific configuration file with '
-                                                                                'API credentials')
 
-        subparsers = parser.add_subparsers(title='COMMANDS')
+        parser.add_argument('-c', '--config', action='store', metavar='', dest='config', help='- Project-specific configuration file')
+        parser.add_argument('--identity', action='store', dest='identity', metavar='', help='- User-specific configuration file with '
+                                                                                'API credentials')
+        parser.add_argument('--version', action='version', version="%(prog)s {0}".format(__version__), help='- Display the program version')
+        parser.add_argument('-v', '--verbose', action='store_true', default=False, help='- Be verbose')
+        parser.add_argument('--help', action='help', help='- Show this message')
+
+        subparsers = parser.add_subparsers(title='COMMANDS', metavar='')
+
+
+        # A help command
+        help_parser = subparsers.add_parser('help', help='Shows a list of commands or help for one command')
+
 
         # A upload command
         upload_parser = subparsers.add_parser('upload', help='Upload files to the server')
@@ -58,6 +67,7 @@ VERSION:
         upload_parser.add_argument('translations', action='store', help='This argument uploads translations files', nargs='?')
 
         upload_parser.set_defaults(func=self.upload_files)
+
 
         # A list command
         list_parser = subparsers.add_parser('list', help='List information about the files')
@@ -76,7 +86,7 @@ VERSION:
         download_parser.set_defaults(func=self.download_project)
 
         # A Build project command
-        export_parser = subparsers.add_parser('build', help='Export Translations')
+        export_parser = subparsers.add_parser('build', add_help=False)
         export_parser.set_defaults(func=self.build_project)
 
         #A test command
@@ -84,7 +94,7 @@ VERSION:
         #test_parser.add_argument('dirname', action='store', help='New directory to create')
         #test_parser.set_defaults(func=self.test)
 
-        if len(sys.argv) == 1:
+        if len(sys.argv) == 1 or "help" in sys.argv:
             parser.print_help()
             sys.exit(1)
 
@@ -150,8 +160,8 @@ VERSION:
         else:
             return config
 
-if __name__ == "__main__":
-    Main().main()
+#if __name__ == "__main__":
+#    Main().main()
 
 
 def start_cli():
