@@ -89,13 +89,8 @@ class Methods:
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/add-file', 'url_par4': True}
 
-        if files[0] == '/': true_source = files[1:]
-        else: true_source = files
-        if item[0] == '/': not_true_source = item[1:]
-        else: not_true_source = item
-        if not true_source == not_true_source:
-            sources = not_true_source
-        else: sources = true_source
+        if item[0] == '/': sources = item[1:]
+        else: sources = item
 
         params = {'json': json, 'export_patterns[{0}]'.format(sources): export_patterns, 'titles[{0}]'.format(sources): parameters.get('titles'),
                   'type': parameters.get('type'), 'first_line_contains_header': parameters.get('first_line_contains_header'),
@@ -103,7 +98,7 @@ class Methods:
                   'translate_attributes': parameters.get('translate_attributes'), 'content_segmentation': parameters.get('content_segmentation'),
                   'translatable_elements': parameters.get('translatable_elements')}
         try:
-            with open(true_source, 'rb') as f:
+            with open(files, 'rb') as f:
                 api_files = {'files[{0}]'.format(sources): f}
                 return self.true_connection(url, params, api_files)
         except(OSError, IOError) as e:
@@ -116,13 +111,8 @@ class Methods:
         url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
                'url_par3': '/update-file', 'url_par4': True}
 
-        if files[0] == '/': true_source = files[1:]
-        else: true_source = files
-        if item[0] == '/': not_true_source = item[1:]
-        else: not_true_source = item
-        if not true_source == not_true_source:
-            sources = not_true_source
-        else: sources = true_source
+        if item[0] == '/': sources = item[1:]
+        else: sources = item
 
         params = {'json': json, 'export_patterns[{0}]'.format(sources): export_patterns, 'titles[{0}]'.format(sources): parameters.get('titles'),
                   'type': parameters.get('type'), 'first_line_contains_header': parameters.get('first_line_contains_header'),
@@ -130,7 +120,7 @@ class Methods:
                   'translate_attributes': parameters.get('translate_attributes'), 'content_segmentation': parameters.get('content_segmentation'),
                   'translatable_elements': parameters.get('translatable_elements')}
         try:
-            with open(true_source, 'rb') as f:
+            with open(files, 'rb') as f:
                 api_files = {'files[{0}]'.format(sources): f}
                 #print files
                 return self.true_connection(url, params, api_files)
@@ -147,10 +137,9 @@ class Methods:
                   'auto_approve_imported': parameters.get('auto_approve_imported', '0'),
                   'import_eq_suggestions': parameters.get('import_eq_suggestions', '0'),
                   'import_duplicates': parameters.get('import_duplicates', '0')}
-        if translations[0] == '/': ff = translations[1:]
-        else: ff = translations
+
         try:
-            with open(ff, 'rb') as f:
+            with open(translations, 'rb') as f:
                 api_files = {'files[{0}]'.format(source_file): f}
                 #print files
                 return self.true_connection(url, params, api_files)
@@ -183,10 +172,12 @@ class Methods:
                 files.append(item)
 
         all_info = Configuration(self.options_config).get_files_source()
+        base_path = os.path.normpath(Configuration(self.options_config).get_base_path()) + os.sep
         common_path = self.preserve_hierarchy(all_info[::3])
         sources_path = self.exists(common_path)
         translations_path = all_info[1::3]
         sources_parameters = all_info[2::3]
+
 
         for item, export_patterns, true_path, parameters in zip(sources_path, translations_path,
                                                                 all_info[::3], sources_parameters):
@@ -210,16 +201,17 @@ class Methods:
                     item = parameters.get('dest')
             if item[0] != '/': ite="/"+item
             else: ite = item
-
+            full_path = base_path.replace('\\', '/') + true_path
             if not ite in files:
-                self.upload_files(true_path, export_patterns, parameters, item)
+                self.upload_files(full_path, export_patterns, parameters, item)
             else:
-                self.update_files(true_path, export_patterns, parameters, item)
+                self.update_files(full_path, export_patterns, parameters, item)
         if dirss:
             return dirs
 
     def upload_translations(self):
         info2 = Configuration(self.options_config).export_pattern_to_path(self.lang())
+        base_path = os.path.normpath(Configuration(self.options_config).get_base_path()) + os.sep
 
         translations_language = info2[1::3]
         translations_path = self.preserve_hierarchy(info2[::3])
@@ -233,7 +225,8 @@ class Methods:
                         source_file = params.get('dest').join(source_file.rsplit(items, 1))
                     else:
                         source_file = params.get('dest')
-                self.upload_translations_files(item, language, source_file, params)
+                full_path = base_path.replace('\\', '/') + item
+                self.upload_translations_files(full_path, language, source_file, params)
                 #print item, language, source_file, params
 
     def supported_languages(self):
