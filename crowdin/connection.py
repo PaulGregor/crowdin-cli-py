@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import json
 import os
 import re
@@ -77,6 +77,7 @@ class Configuration(object):
     def get_files_source(self):
         sources = []
         for f in self.files_source:
+            f['source'] = f['source'].replace('^', '!')
             ignore_list = []
             parameters = {}
 
@@ -122,6 +123,7 @@ class Configuration(object):
             file_name = f['source'][1:][f['source'].rfind("/"):]
             if 'ignore' in f:
                 for ign in f['ignore']:
+                    ign = ign.replace('^', '!')
                     root, items, fg = self.get_doubled_asterisk(ign)
                     #walk through folders and file in local directories
                     for dp, dn, filenames in os.walk(items):
@@ -129,7 +131,7 @@ class Configuration(object):
                             if fnmatch.fnmatch(ff, ign[ign.rfind('/'):][1:]):
                                 ignore_list.append('/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/'))
 
-            if '*' in file_name:
+            if '*' in file_name or '?' in file_name or '[' in file_name:
                     if '**' in f['source']:
                         #sources = [os.path.join(dp.strip(root), ff).replace("\\", r'/') for dp, dn, filenames in os.walk(items)
                         #          for ff in filenames if os.path.splitext(ff)[1] == os.path.splitext(f['source'])[1]]
@@ -175,6 +177,8 @@ class Configuration(object):
                 sources.append(f['source'])
                 sources.append(f['translation'])
                 sources.append(parameters)
+        if not sources:
+            print 'It seems that there are none sources files to upload. Please check your configuration'
         return sources
 
     def android_locale_code(self, locale_code):

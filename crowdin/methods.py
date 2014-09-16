@@ -172,12 +172,12 @@ class Methods:
                 files.append(item)
 
         all_info = Configuration(self.options_config).get_files_source()
+
         base_path = os.path.normpath(Configuration(self.options_config).get_base_path()) + os.sep
         common_path = self.preserve_hierarchy(all_info[::3])
         sources_path = self.exists(common_path)
         translations_path = all_info[1::3]
         sources_parameters = all_info[2::3]
-
 
         for item, export_patterns, true_path, parameters in zip(sources_path, translations_path,
                                                                 all_info[::3], sources_parameters):
@@ -202,6 +202,7 @@ class Methods:
             if item[0] != '/': ite="/"+item
             else: ite = item
             full_path = base_path.replace('\\', '/') + true_path
+
             if not ite in files:
                 self.upload_files(full_path, export_patterns, parameters, item)
             else:
@@ -226,7 +227,12 @@ class Methods:
                     else:
                         source_file = params.get('dest')
                 full_path = base_path.replace('\\', '/') + item
-                self.upload_translations_files(full_path, language, source_file, params)
+                check_l_option = self.any_options.language
+                if check_l_option:
+                    if language == check_l_option:
+                        self.upload_translations_files(full_path, language, source_file, params)
+                else:
+                    self.upload_translations_files(full_path, language, source_file, params)
                 #print item, language, source_file, params
 
     def supported_languages(self):

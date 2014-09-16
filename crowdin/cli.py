@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 from __init__ import __version__
 import argparse
 import gettext
@@ -65,6 +65,7 @@ VERSION:
         upload_parser = subparsers.add_parser('upload', help='Upload files to the server')
         upload_parser.add_argument('sources', action='store', help='This argument uploads sources files', nargs='?')
         upload_parser.add_argument('translations', action='store', help='This argument uploads translations files', nargs='?')
+        upload_parser.add_argument('-l', '--language', action='store', metavar='', dest='language', help='- defines the language translations should be uploaded to.')
 
         upload_parser.set_defaults(func=self.upload_files)
 
