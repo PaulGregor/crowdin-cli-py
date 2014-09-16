@@ -1,10 +1,10 @@
 ﻿# Crowdin-cli-py
 
-[Crowdin Integration Utility Homepage](http://crowdin.com/page/cli-tool)
- | [Support](http://crowdin.com/contacts)
- | [crowdin.com Homepage](http://crowdin.com)
+[Crowdin Integration Utility Homepage](https://crowdin.com/page/cli-tool)
+ | [Support](https://crowdin.com/contacts)
+ | [crowdin.com Homepage](https://crowdin.com)
 
-A Command-Line Interface to sync files between local computer/server and [Crowdin](crowdin.com).
+A Command-Line Interface to sync files between local computer/server and [Crowdin](https://crowdin.com).
 
 It is cross-platform and can be run in a terminal (Linux, MacOS X) or in cmd.exe (Windows).
 
@@ -149,7 +149,7 @@ files:
 ```
 Mapping format is the following: `crowdin_language_code : code_use_use`.
 
-Check [complete list of Crowdin language codes](http://crowdin.com/page/api/language-codes) that can be used for mapping.
+Check [complete list of Crowdin language codes](https://crowdin.com/page/api/language-codes) that can be used for mapping.
 
 You can also override language codes for other placeholders like `%android_code%`, `%locale%` etc...
 
@@ -345,6 +345,6 @@ Tested with the following Python versions:
 
 Author: Paul Gregor (comixan@gmail.com)
 
-Copyright: 2012-2014 [crowdin.com](http://crowdin.com/)
+Copyright: 2012-2014 [crowdin.com](https://crowdin.com/)
 
 This project is licensed under the MIT license, a copy of which can be found in the LICENSE file.
