@@ -33,7 +33,10 @@ class Configuration(object):
             exit()
         if 'preserve_hierarchy' in config:
             #print config['base_path']
-            self.preserve_hierarchy = config['preserve_hierarchy']
+            if config['preserve_hierarchy'] == True or config['preserve_hierarchy'] == False:
+                self.preserve_hierarchy = config['preserve_hierarchy']
+            else:
+                print "Parameter `preserve_hierarchy` allows values of true or false. \n"
         else:
             self.preserve_hierarchy = False
         if config.get('base_url'):
@@ -44,12 +47,15 @@ class Configuration(object):
             #print config['base_path']
             self.base_path = config['base_path']
         else:
+            logger.info("Warning: Configuration file misses parameter `base_path` that defines "
+                        "your project root directory. Using current directory as a root directory.")
             self.base_path = os.getcwd()
         # self.files_source = config['files'][0]['source']
         if config.get('files'):
             self.files_source = config['files']
         else:
-            print "You didn't set any files in your config. It's very sad."
+            print "Configuration file misses required section `files`" \
+                  "\n See http://crowdin.com/page/cli-tool#configuration-file for more details"
             exit()
 
     def get_project_identifier(self):
@@ -78,6 +84,10 @@ class Configuration(object):
         sources = []
         for f in self.files_source:
             f['source'] = f['source'].replace('^', '!')
+            if f['source'].count('**') > 1:
+                logger.info("Source pattern {0} is not valid. The mask `**` "
+                            "can be used only once in the source pattern.".format(f['source']))
+                exit()
             ignore_list = []
             parameters = {}
 
@@ -178,7 +188,7 @@ class Configuration(object):
                 sources.append(f['translation'])
                 sources.append(parameters)
         if not sources:
-            print 'It seems that there are none sources files to upload. Please check your configuration'
+            print 'It seems that there are none files to upload. Please check your configuration'
         return sources
 
     def android_locale_code(self, locale_code):
@@ -205,6 +215,11 @@ class Configuration(object):
                                                                         get_sources_translations[1::3],
                                                                         get_sources_translations[2::3]):
             translation = {}
+            if '**' in value_translation:
+                logger.info("Translation pattern `#{file['translation']}` is not valid. The mask `**` "
+                            "can't be used. When using `**` in 'translation' pattern it will always "
+                            "contain sub-path from 'source' for certain file.")
+
             for l in lang:
                 path = value_source
                 if '/' in path:
@@ -242,11 +257,16 @@ class Configuration(object):
                                 for key, value in pattern.items():
                                     if key == true_key:
                                         pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
+
                     except Exception as e:
                         print e
                         print 'It seems that languages_mapping is not set correctly'
                         exit()
-
+                m = re.search("%[a-z0-9_]*?%", value_translation)
+                if m.group(0) not in pattern:
+                    print 'Warning: {} is not valid variable supported by Crowdin. See ' \
+                          'http://crowdin.com/page/cli-tool#configuration-file for more details.'.format(m.group(0))
+                    exit()
                 path_lang = value_translation
                 rep = dict((re.escape(k), v) for k, v in pattern.iteritems())
                 patter = re.compile("|".join(rep.keys()))
@@ -298,5 +318,13 @@ def result_handling(self):
         # raise CliException(self)
         logger.info("Operation was unsuccessful")
         print "Error code: {0}. Error message: {1}".format(data["error"]["code"], data["error"]["message"])
+
+        if data["error"]["code"] == '3':
+            print "Seems Crowdin server API URL is not valid. Please check the " \
+                  "`api_key` parameter in the configuration file."
+        if data["error"]["code"] == '1':
+            print "Seems Crowdin project  is not valid. Please check the " \
+                  "`project_identifier` parameter in the configuration file."
+        exit()
 
 

@@ -144,7 +144,15 @@ VERSION:
             home = options_config.identity
         try:
             fh = open(location_to_configuration_file, "r")
-            config = yaml.load(fh)
+            try:
+                config = yaml.load(fh)
+            except yaml.YAMLError as e:
+                print e, '\n Could not parse YAML. ' \
+                         'We were unable to successfully parse the crowdin.yaml file that you provided - ' \
+                         'it most likely is not well-formed YAML. ' \
+                         '\n Please check whether your crowdin.yaml is valid YAML - you can use ' \
+                         'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.'
+                exit()
             if os.path.isfile(home):
                 fhh = open(home, "r")
                 config_api = yaml.load(fhh)
@@ -156,13 +164,15 @@ VERSION:
             #print "I'M robot method open file"
             fh.close()
         except(OSError, IOError) as e:
-            print e, "\n Please check your config file"
+            print e, 'Can''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli help` ' \
+                     'to know how to specify custom configuration file See ' \
+                     'http://crowdin.com/page/cli-tool#configuration-file for more details'
             exit()
         else:
             return config
 
 #if __name__ == "__main__":
-#    Main().main()
+ #   Main().main()
 
 
 def start_cli():
