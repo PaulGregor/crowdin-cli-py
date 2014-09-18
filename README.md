@@ -1,30 +1,27 @@
 ﻿# Crowdin-cli-py
 
-[Crowdin Integration Utility Homepage](https://crowdin.com/page/cli-tool)
- | [Support](https://crowdin.com/contacts)
- | [crowdin.com Homepage](https://crowdin.com)
+[Crowdin Integration Utility Homepage](http://crowdin.com/page/cli-tool)
+ | [Support](http://crowdin.com/contacts)
+ | [crowdin.com Homepage](http://crowdin.com)
 
-A Command-Line Interface to sync files between local computer/server and [Crowdin](https://crowdin.com).
+A Command-Line Interface to sync files between local computer/server and [Crowdin](crowdin.com).
 
 It is cross-platform and can be run in a terminal (Linux, MacOS X) or in cmd.exe (Windows).
 
-![ScreenShot](http://i.imgur.com/HmjWDC3.png)
+![ScreenShot]
 
 > **WARNING**: This is a development version: It contains the latest changes, but may also have several known issues, including crashes and data loss situations. In fact, it may not work at all.
 
 ## Installation
-###**Windows**:
 
-[Download link](https://sourceforge.net/projects/crowdin/files/latest/download?source=files)
 
-###**Ubuntu/Debian**:
 ```
 (sudo) pip install crowdin-cli-py
 ```
 
 If you don't have pip:
 ```
-(sudo) apt-get install pip
+(sudo) easy_install pip
 (sudo) pip install crowdin-cli-py
 ```
 
@@ -152,7 +149,7 @@ files:
 ```
 Mapping format is the following: `crowdin_language_code : code_use_use`.
 
-Check [complete list of Crowdin language codes](https://crowdin.com/page/api/language-codes) that can be used for mapping.
+Check [complete list of Crowdin language codes](http://crowdin.com/page/api/language-codes) that can be used for mapping.
 
 You can also override language codes for other placeholders like `%android_code%`, `%locale%` etc...
 
@@ -317,8 +314,10 @@ List information about the translations files in current project that match the 
 $ crowdin-cli-py list translations
 ```
 
-By default, `list` command print a list of all the files
-
+Get help on `list` command:
+```
+$ crowdin-cli-py -h list
+```
 
 Get help on `upload` command:
 ```
@@ -348,6 +347,6 @@ Tested with the following Python versions:
 
 Author: Paul Gregor (comixan@gmail.com)
 
-Copyright: 2012-2014 [crowdin.com](https://crowdin.com/)
+Copyright: 2012-2014 [crowdin.com](http://crowdin.com/)
 
 This project is licensed under the MIT license, a copy of which can be found in the LICENSE file.
