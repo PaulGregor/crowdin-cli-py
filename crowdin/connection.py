@@ -129,18 +129,22 @@ class Configuration(object):
             if 'dest' in f:
                 parameters['dest'] = f['dest']
 
-            root, items, fg = self.get_doubled_asterisk(f['source'])
+
             file_name = f['source'][1:][f['source'].rfind("/"):]
             if 'ignore' in f:
                 for ign in f['ignore']:
-                    ign = ign.replace('^', '!')
-                    root, items, fg = self.get_doubled_asterisk(ign)
-                    #walk through folders and file in local directories
-                    for dp, dn, filenames in os.walk(items):
-                        for ff in filenames:
-                            if fnmatch.fnmatch(ff, ign[ign.rfind('/'):][1:]):
-                                ignore_list.append('/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/'))
+                    if '*' in ign or '?' in ign or '[' in ign:
+                        ign = ign.replace('^', '!')
+                        root, items, fg = self.get_doubled_asterisk(ign)
+                        #walk through folders and file in local directories
+                        for dp, dn, filenames in os.walk(items):
+                            for ff in filenames:
+                                if fnmatch.fnmatch(ff, ign[ign.rfind('/'):][1:]):
+                                    ignore_list.append(os.path.join(dp.replace(root, ''), ff).replace("\\", r'/'))
+                    else:
+                        ignore_list.append(ign.replace("\\", r'/'))
 
+            root, items, fg = self.get_doubled_asterisk(f['source'])
             if '*' in file_name or '?' in file_name or '[' in file_name:
                     if '**' in f['source']:
                         #sources = [os.path.join(dp.strip(root), ff).replace("\\", r'/') for dp, dn, filenames in os.walk(items)
@@ -152,7 +156,8 @@ class Configuration(object):
                                     if fg in dp.replace("\\", r'/'):
                                         fgg=''
                                         if fg:fgg = '/'+fg
-                                        value = '/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/')
+                                        value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
+
                                         if not value in ignore_list:
                                             sources.append(value)
                                             sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
@@ -164,7 +169,7 @@ class Configuration(object):
                             for ff in filenames:
                                 #if os.path.splitext(ff)[1] == os.path.splitext(f['source'])[1]:
                                 if fnmatch.fnmatch(ff, f['source'][f['source'].rfind('/'):][1:]):
-                                    value = '/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/')
+                                    value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
                                     if not value in ignore_list:
                                         sources.append(value)
                                         sources.append(f['translation'])
@@ -177,7 +182,7 @@ class Configuration(object):
                             if fg in dp.replace("\\", r'/'):
                                 fgg=''
                                 if fg:fgg = '/'+fg
-                                value = '/' + os.path.join(dp.lstrip(root), ff).replace("\\", r'/')
+                                value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
                                 if not value in ignore_list:
                                     sources.append(value)
                                     sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
