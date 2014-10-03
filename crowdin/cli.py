@@ -51,7 +51,7 @@ VERSION:
         parser.add_argument('--identity', action='store', dest='identity', metavar='', help='- User-specific configuration file with '
                                                                                 'API credentials')
         parser.add_argument('--version', action='version', version="%(prog)s {0}".format(__version__), help='- Display the program version')
-        parser.add_argument('-v', '--verbose', action='store_true', default=False, help='- Be verbose')
+        parser.add_argument('-v', '--verbose', action='store_true', default=False, dest='verbose', help='- Be verbose')
         parser.add_argument('--help', action='help', help='- Show this message')
 
         subparsers = parser.add_subparsers(title='COMMANDS', metavar='')
@@ -63,9 +63,18 @@ VERSION:
 
         # A upload command
         upload_parser = subparsers.add_parser('upload', help='Upload files to the server')
-        upload_parser.add_argument('sources', action='store', help='This argument uploads sources files', nargs='?')
-        upload_parser.add_argument('translations', action='store', help='This argument uploads translations files', nargs='?')
-        upload_parser.add_argument('-l', '--language', action='store', metavar='', dest='language', help='- defines the language translations should be uploaded to.')
+        upload_parser.add_argument('sources', help='This argument uploads sources files', nargs='?')
+        upload_parser.add_argument('translations',  help='This argument uploads translations files', nargs='?')
+        upload_parser.add_argument('-l', '--language', action='store', metavar='', dest='language', help='- Defines the language translations should be uploaded to.')
+
+        upload_parser.add_argument('--import-duplicates', action='store_true',  dest='duplicates', help='- Defines whether to add translation if there is the same translation previously added.')
+        upload_parser.add_argument('--no-import-duplicates', action='store_false', dest='duplicates', help='- Defines whether to add translation if there is the same translation previously added.')
+
+        upload_parser.add_argument('--import-eq-suggestions', action='store_true',  dest='suggestions', help='- Defines whether to add translation if it is equal to source string at Crowdin.')
+        upload_parser.add_argument('--no-import-eq-suggestions', action='store_false',  dest='suggestions', help='- Defines whether to add translation if it is equal to source string at Crowdin.')
+
+        upload_parser.add_argument('--auto-approve-imported', action='store_true',  dest='imported', help='- Mark uploaded translations as approved.')
+        upload_parser.add_argument('--no-auto-approve-imported', action='store_false',  dest='imported', help='- Mark uploaded translations as approved.')
 
         upload_parser.set_defaults(func=self.upload_files)
 
@@ -84,11 +93,12 @@ VERSION:
 
         # A download command
         download_parser = subparsers.add_parser('download', help='Download projects files')
-        download_parser.set_defaults(func=self.download_project)
+        download_parser.add_argument('-l', '--language', action='store', metavar='', dest='dlanguage',
+                                   help='- If the option is defined the '
+                                        'translations will be downloaded for single specified language.'
+                                        'Otherwise (by default) translations are downloaded for all languages')
 
-        # A Build project command
-        export_parser = subparsers.add_parser('build', add_help=False)
-        export_parser.set_defaults(func=self.build_project)
+        download_parser.set_defaults(func=self.download_project)
 
         #A test command
         #test_parser = subparsers.add_parser('test', help='Test Crowdin project.')
@@ -130,8 +140,6 @@ VERSION:
     def download_project(self, download):
         return methods.Methods(download, self.open_file(download)).download_project()
 
-    def build_project(self, build):
-        return methods.Methods(build, self.open_file(build)).build_project()
 
     def open_file(self, options_config):
         # reading configuration file
@@ -164,15 +172,15 @@ VERSION:
             #print "I'M robot method open file"
             fh.close()
         except(OSError, IOError) as e:
-            print e, 'Can''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli help` ' \
+            print e, 'Can''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` ' \
                      'to know how to specify custom configuration file See ' \
                      'http://crowdin.com/page/cli-tool#configuration-file for more details'
             exit()
         else:
             return config
 
-#if __name__ == "__main__":
- #   Main().main()
+# if __name__ == "__main__":
+#     Main().main()
 
 
 def start_cli():

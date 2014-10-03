@@ -1,6 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 import json
 import os
+import traceback
 import re
 import logging
 import requests
@@ -36,7 +37,7 @@ class Configuration(object):
             if config['preserve_hierarchy'] == True or config['preserve_hierarchy'] == False:
                 self.preserve_hierarchy = config['preserve_hierarchy']
             else:
-                print "Parameter `preserve_hierarchy` allows values of true or false. \n"
+                print "Parameter `preserve_hierarchy` allows values of True or False. \n"
         else:
             self.preserve_hierarchy = False
         if config.get('base_url'):
@@ -80,6 +81,12 @@ class Configuration(object):
         return root, items, fg
 
     #Method for getting parameters from configuration file.
+    def metacharacter(self, name_filter):
+        if name_filter.find('\\') > -1:
+            r = name_filter.find('\\') + 1
+            name_filter = name_filter.replace(name_filter[r], "[{0}]".format(name_filter[r])).replace(name_filter[r-1], '')
+        return name_filter
+
     def get_files_source(self):
         sources = []
         for f in self.files_source:
@@ -139,7 +146,7 @@ class Configuration(object):
                         #walk through folders and file in local directories
                         for dp, dn, filenames in os.walk(items):
                             for ff in filenames:
-                                if fnmatch.fnmatch(ff, ign[ign.rfind('/'):][1:]):
+                                if fnmatch.fnmatch(ff, self.metacharacter(ign[ign.rfind('/'):][1:])):
                                     ignore_list.append(os.path.join(dp.replace(root, ''), ff).replace("\\", r'/'))
                     else:
                         ignore_list.append(ign.replace("\\", r'/'))
@@ -152,13 +159,14 @@ class Configuration(object):
 
                         for dp, dn, filenames in os.walk(items):
                             for ff in filenames:
-                                if fnmatch.fnmatch(ff, f['source'][f['source'].rfind('/'):][1:]):
+
+                                if fnmatch.fnmatch(ff, self.metacharacter(f['source'][f['source'].rfind('/'):][1:])):
                                     if fg in dp.replace("\\", r'/'):
                                         fgg=''
                                         if fg:fgg = '/'+fg
                                         value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
 
-                                        if not value in ignore_list:
+                                        if not [s for s in ignore_list if s in value]:
                                             sources.append(value)
                                             sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
                                             sources.append(parameters)
@@ -168,12 +176,14 @@ class Configuration(object):
                         for dp, dn, filenames in os.walk(items):
                             for ff in filenames:
                                 #if os.path.splitext(ff)[1] == os.path.splitext(f['source'])[1]:
-                                if fnmatch.fnmatch(ff, f['source'][f['source'].rfind('/'):][1:]):
+                                if fnmatch.fnmatch(ff, self.metacharacter(f['source'][f['source'].rfind('/'):][1:])):
                                     value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
-                                    if not value in ignore_list:
+
+                                    if not [s for s in ignore_list if s in value]:
                                         sources.append(value)
                                         sources.append(f['translation'])
                                         sources.append(parameters)
+                            break
 
             elif '**' in f['source']:
                 for dp, dn, filenames in os.walk(items):
@@ -183,15 +193,16 @@ class Configuration(object):
                                 fgg=''
                                 if fg:fgg = '/'+fg
                                 value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
-                                if not value in ignore_list:
+                                if not [s for s in ignore_list if s in value]:
                                     sources.append(value)
                                     sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
                                     sources.append(parameters)
 
             else:
-                sources.append(f['source'])
-                sources.append(f['translation'])
-                sources.append(parameters)
+                if not [s for s in ignore_list if s in f['source']]:
+                    sources.append(f['source'])
+                    sources.append(f['translation'])
+                    sources.append(parameters)
         if not sources:
             print 'It seems that there are none files to upload. Please check your configuration'
         return sources
@@ -220,10 +231,11 @@ class Configuration(object):
                                                                         get_sources_translations[1::3],
                                                                         get_sources_translations[2::3]):
             translation = {}
+
             if '**' in value_translation:
-                logger.info("Translation pattern `#{file['translation']}` is not valid. The mask `**` "
+                logger.info("Translation pattern `{0}` is not valid. The mask `**` "
                             "can't be used. When using `**` in 'translation' pattern it will always "
-                            "contain sub-path from 'source' for certain file.")
+                            "contain sub-path from 'source' for certain file.".format(value_translation))
 
             for l in lang:
                 path = value_source
@@ -256,12 +268,21 @@ class Configuration(object):
                     try:
                         for i in translations_params['languages_mapping'].iteritems():
                             if not i[1] is None:
-                                rep = dict((re.escape(k), v) for k, v in i[1].iteritems())
-                                patter = re.compile("|".join(rep.keys()))
                                 true_key = ''.join(('%', i[0], '%'))
-                                for key, value in pattern.items():
-                                    if key == true_key:
-                                        pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
+                                for k, v in i[1].iteritems():
+                                    if l['crowdin_code'] == k:
+                                        for key, value in pattern.items():
+                                            if key == true_key:
+                                                pattern[key] = v
+
+                        # for i in translations_params['languages_mapping'].iteritems():
+                        #     if not i[1] is None:
+                        #         rep = dict((re.escape(k), v) for k, v in i[1].iteritems())
+                        #         patter = re.compile("|".join(rep.keys()))
+                        #         true_key = ''.join(('%', i[0], '%'))
+                        #         for key, value in pattern.items():
+                        #             if key == true_key:
+                        #                 pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
 
                     except Exception as e:
                         print e
@@ -277,7 +298,7 @@ class Configuration(object):
                 patter = re.compile("|".join(rep.keys()))
                 text = patter.sub(lambda m: rep[re.escape(m.group(0))], path_lang)
                 if not text in translation:
-                    translation[l['crowdin_code']] = text
+                    translation[l['crowdin_code']] = text.replace('//', '/', 1)
 
                 if not path in lang_info:
                     lang_info.append(path)
@@ -287,12 +308,13 @@ class Configuration(object):
 
 
 class Connection(Configuration):
-    def __init__(self, options_config, url, params,  api_files=None):
+    def __init__(self, options_config, url, params,  api_files=None, any_options=None):
         super(Connection, self).__init__(options_config)
         #print "__init__ connection"
         self.url = url
         self.params = params
         self.files = api_files
+        self.any_options = any_options
 
     def connect(self):
         valid_url = self.base_url + self.url['url_par1']
@@ -302,6 +324,8 @@ class Connection(Configuration):
         try:
             response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files)
         except requests.exceptions.ConnectionError as e:
+            if self.any_options.verbose is True:
+                traceback.print_exc()
             print "It seems that we have faced some connection problem. It's very sad, please make sure you " \
                   "have access to internet."
             logger.warning(e.args[0].reason)
@@ -310,8 +334,12 @@ class Connection(Configuration):
             if response.status_code != 200:
                 return result_handling(response.text)
             # raise CliException(response.text)
+
+            elif self.params.get("file_name"):
+                print "{0} source file: {1} - OK".format(self.params['action_type'], self.params.get("file_name"))
             else:
-                # logger.info("Operation was successful")
+                #logger.info("Operation was successful")
+
                 return response.content
                 #return response.text
 
