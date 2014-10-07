@@ -148,11 +148,6 @@ class Methods:
 
         url = dict(post='POST', url_par1='/api/project/', url_par2=True, url_par3='/upload-translation', url_par4=True)
         options_dict = vars(self.any_options)
-        for k, v in options_dict.items():
-            if v == False:
-                options_dict[k] = "0"
-            if v == True:
-                options_dict[k] = "1"
 
         params = {'json': 'json', 'language': language,
                   'auto_approve_imported': options_dict.get('imported', '0'),

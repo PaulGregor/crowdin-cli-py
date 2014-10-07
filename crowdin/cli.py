@@ -67,13 +67,13 @@ VERSION:
         upload_parser.add_argument('translations',  help='This argument uploads translations files', nargs='?')
         upload_parser.add_argument('-l', '--language', action='store', metavar='', dest='language', help='- Defines the language translations should be uploaded to.')
 
-        upload_parser.add_argument('--import-duplicates', action='store_true',  dest='duplicates', help='- Defines whether to add translation if there is the same translation previously added.')
+        upload_parser.add_argument('--import-duplicates', action='store_const',  dest='duplicates', const='1', help='- Defines whether to add translation if there is the same translation previously added.')
         upload_parser.add_argument('--no-import-duplicates', action='store_false', dest='duplicates', help='- Defines whether to add translation if there is the same translation previously added.')
 
-        upload_parser.add_argument('--import-eq-suggestions', action='store_true',  dest='suggestions', help='- Defines whether to add translation if it is equal to source string at Crowdin.')
+        upload_parser.add_argument('--import-eq-suggestions', action='store_const',  dest='suggestions', const='1', help='- Defines whether to add translation if it is equal to source string at Crowdin.')
         upload_parser.add_argument('--no-import-eq-suggestions', action='store_false',  dest='suggestions', help='- Defines whether to add translation if it is equal to source string at Crowdin.')
 
-        upload_parser.add_argument('--auto-approve-imported', action='store_true',  dest='imported', help='- Mark uploaded translations as approved.')
+        upload_parser.add_argument('--auto-approve-imported', action='store_const',  dest='imported', const='1', help='- Mark uploaded translations as approved.')
         upload_parser.add_argument('--no-auto-approve-imported', action='store_false',  dest='imported', help='- Mark uploaded translations as approved.')
 
         upload_parser.set_defaults(func=self.upload_files)
@@ -179,8 +179,8 @@ VERSION:
         else:
             return config
 
-# if __name__ == "__main__":
-#     Main().main()
+#if __name__ == "__main__":
+#    Main().main()
 
 
 def start_cli():

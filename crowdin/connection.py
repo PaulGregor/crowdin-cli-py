@@ -6,6 +6,7 @@ import re
 import logging
 import requests
 import fnmatch
+from __init__ import __version__
 
 logger = logging.getLogger('crowdin')
 
@@ -321,8 +322,11 @@ class Connection(Configuration):
         if self.url['url_par2']: valid_url += self.get_project_identifier()
         valid_url += self.url['url_par3']
         if self.url['url_par4']: valid_url += '?key=' + self.get_api_key()
+        headers = {
+            'User-Agent': 'crowdin-cli-py v.{0}'.format(__version__),
+        }
         try:
-            response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files)
+            response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files, headers=headers)
         except requests.exceptions.ConnectionError as e:
             if self.any_options.verbose is True:
                 traceback.print_exc()
