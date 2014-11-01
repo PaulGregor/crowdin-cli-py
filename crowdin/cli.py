@@ -11,16 +11,16 @@ import yaml
 
 class Main:
     def __init__(self):
-        level = logging.DEBUG
+        level = logging.INFO
         formatter = logging.Formatter('%(message)s')
-        logger = logging.getLogger('crowdin')
-        logger.setLevel(level)
+        self.logger = logging.getLogger('crowdin')
+        self.logger.setLevel(level)
 
-        console = logging.StreamHandler()
-        console.setLevel(level)
-        console.setFormatter(formatter)
+        self.console = logging.StreamHandler()
+        self.console.setLevel(level)
+        self.console.setFormatter(formatter)
 
-        logger.addHandler(console)
+        self.logger.addHandler(self.console)
 
         l_dir = os.path.dirname(os.path.realpath(__file__)) + "/locales"
 
@@ -122,6 +122,12 @@ VERSION:
         # print args.identity
         #print "I'm method main"
         args = parser.parse_args()
+        if args.verbose:
+            self.logger.setLevel(logging.DEBUG)
+            self.console.setLevel(logging.DEBUG)
+            self.logger.addHandler(self.console)
+
+
         args.func(args)
 
     def test(self, test):
@@ -180,7 +186,7 @@ VERSION:
             return config
 
 #if __name__ == "__main__":
-#    Main().main()
+ #   Main().main()
 
 
 def start_cli():

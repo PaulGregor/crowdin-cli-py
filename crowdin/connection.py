@@ -75,6 +75,7 @@ class Configuration(object):
     def get_doubled_asterisk(self, f_sources):
         root = self.base_path.replace("\\", r'/')
         if '**' in f_sources:
+            if f_sources[0] != '/': f_sources = '/' + f_sources
             items = root + f_sources[:f_sources.rfind("**")]
         else: items = root + f_sources[:f_sources.rfind('/')]
         dirs_after = f_sources[2:][f_sources.rfind("**"):]
@@ -101,24 +102,31 @@ class Configuration(object):
 
             if 'titles' in f:
                 parameters['titles'] = f['titles']
+
             if 'type' in f:
                 parameters['type'] = f['type']
+
             if 'translate_content' in f:
                 parameters['translate_content'] = f['translate_content']
+
             if 'translate_attributes' in f:
                 parameters['translate_attributes'] = f['translate_attributes']
 
             if 'content_segmentation' in f:
                 parameters['content_segmentation'] = f['content_segmentation']
+
             if 'translatable_elements' in f:
                 parameters['translatable_elements'] = f['translatable_elements']
+
             if 'update_option' in f:
                 parameters['update_option'] = f['update_option']
 
             if 'first_line_contains_header' in f:
                 parameters['first_line_contains_header'] = f['first_line_contains_header']
+
             if 'scheme' in f:
                 parameters['scheme'] = f['scheme']
+
             if 'multilingual_spreadsheet' in f:
                 parameters['multilingual_spreadsheet'] = f['multilingual_spreadsheet']
 
@@ -224,7 +232,7 @@ class Configuration(object):
             locale_code = "zh-Hans"
         return locale_code.replace('-', '_')
 
-    def export_pattern_to_path(self, lang):
+    def export_pattern_to_path(self, lang, download=None):
         #translation = {}
         lang_info = []
         get_sources_translations = self.get_files_source()
@@ -265,16 +273,17 @@ class Configuration(object):
                     '%android_code%': self.android_locale_code(l['locale']),
                     '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
                 }
-                if 'languages_mapping' in translations_params:
-                    try:
-                        for i in translations_params['languages_mapping'].iteritems():
-                            if not i[1] is None:
-                                true_key = ''.join(('%', i[0], '%'))
-                                for k, v in i[1].iteritems():
-                                    if l['crowdin_code'] == k:
-                                        for key, value in pattern.items():
-                                            if key == true_key:
-                                                pattern[key] = v
+                if not download:
+                    if 'languages_mapping' in translations_params:
+                        try:
+                            for i in translations_params['languages_mapping'].iteritems():
+                                if not i[1] is None:
+                                    true_key = ''.join(('%', i[0], '%'))
+                                    for k, v in i[1].iteritems():
+                                        if l['crowdin_code'] == k:
+                                            for key, value in pattern.items():
+                                                if key == true_key:
+                                                    pattern[key] = v
 
                         # for i in translations_params['languages_mapping'].iteritems():
                         #     if not i[1] is None:
@@ -285,10 +294,10 @@ class Configuration(object):
                         #             if key == true_key:
                         #                 pattern[key] = patter.sub(lambda m: rep[re.escape(m.group(0))], value)
 
-                    except Exception as e:
-                        print e
-                        print 'It seems that languages_mapping is not set correctly'
-                        exit()
+                        except Exception as e:
+                            print e
+                            print 'It seems that languages_mapping is not set correctly'
+                            exit()
                 m = re.search("%[a-z0-9_]*?%", value_translation)
                 if m.group(0) not in pattern:
                     print 'Warning: {} is not valid variable supported by Crowdin. See ' \
@@ -299,7 +308,7 @@ class Configuration(object):
                 patter = re.compile("|".join(rep.keys()))
                 text = patter.sub(lambda m: rep[re.escape(m.group(0))], path_lang)
                 if not text in translation:
-                    translation[l['crowdin_code']] = text.replace('//', '/', 1)
+                    translation[l['crowdin_code']] = (text[1:] if text[:1] == '/' else text).replace('//', '/', 1)
 
                 if not path in lang_info:
                     lang_info.append(path)
@@ -309,13 +318,14 @@ class Configuration(object):
 
 
 class Connection(Configuration):
-    def __init__(self, options_config, url, params,  api_files=None, any_options=None):
+    def __init__(self, options_config, url, params,  api_files=None, any_options=None, additional_parameters=None):
         super(Connection, self).__init__(options_config)
         #print "__init__ connection"
         self.url = url
         self.params = params
         self.files = api_files
         self.any_options = any_options
+        self.additional_parameters = additional_parameters
 
     def connect(self):
         valid_url = self.base_url + self.url['url_par1']
@@ -326,7 +336,11 @@ class Connection(Configuration):
             'User-Agent': 'crowdin-cli-py v.{0}'.format(__version__),
         }
         try:
+            logger.debug('Request started: \n{0} \n{1} \n{2} \n{3} \n{4} \nRequest ended.'.format(self.url['post'],
+                                                                    valid_url, self.params,
+                                                                    self.files, headers))
             response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files, headers=headers)
+
         except requests.exceptions.ConnectionError as e:
             if self.any_options.verbose is True:
                 traceback.print_exc()
@@ -335,14 +349,31 @@ class Connection(Configuration):
             logger.warning(e.args[0].reason)
             exit()
         else:
+            try:
+                logger.debug(json.loads(response.text))
+            except ValueError, e:
+                pass
             if response.status_code != 200:
                 return result_handling(response.text)
             # raise CliException(response.text)
 
-            elif self.params.get("file_name"):
-                print "{0} source file: {1} - OK".format(self.params['action_type'], self.params.get("file_name"))
+            elif self.additional_parameters:
+                data = json.loads(response.text)
+                #print data
+                if self.additional_parameters.get("action_type") != 'translations':
+                    if not data.get('stats'):
+                        if self.additional_parameters.get("file_name") in data["files"]:
+                            answer = data["files"][self.additional_parameters.get("file_name")]
+                    else:
+                        answer = "OK"
+                    logger.info("{0} source file: {1} - {2}".format(self.additional_parameters.get('action_type'),
+                                                                    self.additional_parameters.get("file_name"), answer))
+                else:
+                    answer = data["files"][self.additional_parameters.get("file_name")]
+                    logger.info("Uploading {0} translation for source file: {1} - {2}".format(
+                        self.additional_parameters.get('t_l'), self.additional_parameters.get("file_name"),
+                        answer))
             else:
-                #logger.info("Operation was successful")
 
                 return response.content
                 #return response.text
