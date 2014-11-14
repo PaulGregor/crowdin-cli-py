@@ -145,6 +145,9 @@ class Configuration(object):
             if 'dest' in f:
                 parameters['dest'] = f['dest']
 
+            if 'escape_quotes' in f:
+                parameters['escape_quotes'] = f['escape_quotes']
+
 
             file_name = f['source'][1:][f['source'].rfind("/"):]
             if 'ignore' in f:
@@ -272,6 +275,7 @@ class Configuration(object):
                     '%locale_with_underscore%': l['locale'].replace('-', '_'),
                     '%android_code%': self.android_locale_code(l['locale']),
                     '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
+                    '%osx_xliff%': self.osx_language_code(l['crowdin_code']) + '.xliff',
                 }
                 if not download:
                     if 'languages_mapping' in translations_params:

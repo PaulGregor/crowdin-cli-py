@@ -85,7 +85,8 @@ class Methods:
                   'scheme': parameters.get('scheme'), 'translate_content': parameters.get('translate_content'),
                   'translate_attributes': parameters.get('translate_attributes'),
                   'content_segmentation': parameters.get('content_segmentation'),
-                  'translatable_elements': parameters.get('translatable_elements')}
+                  'translatable_elements': parameters.get('translatable_elements'),
+                  'escape_quotes': parameters.get('escape_quotes', '3')}
         additional_parameters = {'file_name': sources, 'action_type': "Uploading"}
         try:
             with open(files, 'rb') as f:
@@ -110,7 +111,7 @@ class Methods:
                   'first_line_contains_header': parameters.get('first_line_contains_header'),
                   'scheme': parameters.get('scheme'),
                   'update_option': parameters.get('update_option'),
-                  'escape_quotes': parameters.get('escape_quotes')}
+                  'escape_quotes': parameters.get('escape_quotes', '3')}
         additional_parameters = {'file_name': sources, 'action_type': "Updating"}
 
         try:
@@ -257,11 +258,13 @@ class Methods:
 
     def supported_languages(self):
         # GET https://api.crowdin.com/api/supported-languages
+        # POST https://api.crowdin.com/api/project/{project-identifier}/supported-languages?key={project-key}
         #logger.info("Getting supported languages list with Crowdin codes mapped to locale name and standardized codes.")
-        url = {'post': 'POST', 'url_par1': '/api/', 'url_par2': False,
-               'url_par3': 'supported-languages', 'url_par4': False}
+        url = {'post': 'POST', 'url_par1': '/api/project/', 'url_par2': True,
+               'url_par3': '/supported-languages', 'url_par4': True}
         params = {'json': 'json'}
         return self.true_connection(url, params)
+
 
     def download_project(self):
         # GET https://api.crowdin.com/api/project/{project-identifier}/download/{package}.zip?key={project-key}
@@ -320,7 +323,7 @@ class Methods:
         params = {'json': 'json'}
         data = json.loads(self.true_connection(url, params))
 
-        logger.info("Build ZIP archive with the latest translations - {0}".format(data["success"]["status"]))
+        logger.info("Building ZIP archive with the latest translations - {0}".format(data["success"]["status"]))
         if data["success"]["status"] == 'skipped':
             print "Warning: Export was skipped. Please note that this method can be invoked only once per 30 minutes."
 

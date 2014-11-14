@@ -1,23 +1,19 @@
 ﻿# Crowdin-cli-py
 
-[Crowdin Integration Utility Homepage](https://crowdin.com/page/cli-tool)
- | [Support](https://crowdin.com/contacts)
- | [crowdin.com Homepage](https://crowdin.com)
+[Crowdin Integration Utility Homepage](http://crowdin.com/page/cli-tool)
+ | [Support](http://crowdin.com/contacts)
+ | [crowdin.com Homepage](http://crowdin.com)
 
-A Command-Line Interface to sync files between local computer/server and [Crowdin](https://crowdin.com).
+A Command-Line Interface to sync files between local computer/server and [Crowdin](crowdin.com).
 
 It is cross-platform and can be run in a terminal (Linux, MacOS X) or in cmd.exe (Windows).
 
-![ScreenShot](http://i.imgur.com/HmjWDC3.png)
+![ScreenShot]
 
 > **WARNING**: This is a development version: It contains the latest changes, but may also have several known issues, including crashes and data loss situations. In fact, it may not work at all.
 
 ## Installation
-###**Windows**:
 
-[Download link](https://sourceforge.net/projects/crowdin/files/latest/download?source=files)
-
-###**Ubuntu/Debian**:
 
 ```
 (sudo) pip install crowdin-cli-py
@@ -25,7 +21,7 @@ It is cross-platform and can be run in a terminal (Linux, MacOS X) or in cmd.exe
 
 If you don't have pip:
 ```
-(sudo) apt-get install pip
+(sudo) easy_install pip
 (sudo) pip install crowdin-cli-py
 ```
 
@@ -66,6 +62,8 @@ files:
       * `%original_path%` - Take parent folders names in Crowdin project to build file path in resulted bundle
       * `%file_extension%` - Original file extension
       * `%file_name%` - File name without extension
+      * `%osx_code%` - OS X Locale identifier used to name ".lproj" directories
+      * `%osx_xliff%` - OS X Locale used to name xliff files (i.e. uk.xliff)
 
          Example for Android projects:
           ```
@@ -128,6 +126,31 @@ This means that you can't commit this file in the code repository, because the A
 
 **NOTE**: user credentials in user-specific configuration file is higher priority than project-specific.
 
+### Escape quotes for `.properties` file format
+
+Defines whether single quote should be escaped by another single quote or backslash in exported translations.
+You can add `escape_quote: <value>` per-file option.
+Acceptable values are: 0, 1, 2, 3. Default is 3.
+
+* 0 — Do not escape single quote;
+* 1 — Escape single quote by another single quote;
+* 2 — Escape single quote by backslash;
+* 3 — Escape single quote by another single quote only in strings containing variables ( {0} )
+
+```
+---
+project_identifier: test
+api_key: KeepTheAPIkeySecret
+base_url: https://api.crowdin.com
+base_path: /path/to/your/project
+
+files:
+  -
+   source: '/en/strings.properties'
+   translation: '/%two_letters_code%/%original_file_name%'
+   escape_quotes: 1
+```
+
 ### Languages mapping
 
 Often software projects have custom names for locale directories. `crowdin-cli` allows you to map your own languages to understandable by Crowdin.
@@ -153,7 +176,7 @@ files:
 ```
 Mapping format is the following: `crowdin_language_code : code_use_use`.
 
-Check [complete list of Crowdin language codes](https://crowdin.com/page/api/language-codes) that can be used for mapping.
+Check [complete list of Crowdin language codes](http://crowdin.com/page/api/language-codes) that can be used for mapping.
 
 You can also override language codes for other placeholders like `%android_code%`, `%locale%` etc...
 
@@ -351,6 +374,6 @@ Tested with the following Python versions:
 
 Author: Paul Gregor (comixan@gmail.com)
 
-Copyright: 2012-2014 [crowdin.com](https://crowdin.com/)
+Copyright: 2012-2014 [crowdin.com](http://crowdin.com/)
 
 This project is licensed under the MIT license, a copy of which can be found in the LICENSE file.

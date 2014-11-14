@@ -185,8 +185,8 @@ VERSION:
         else:
             return config
 
-#if __name__ == "__main__":
- #   Main().main()
+if __name__ == "__main__":
+    Main().main()
 
 
 def start_cli():
