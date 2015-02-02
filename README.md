@@ -8,7 +8,7 @@ A Command-Line Interface to sync files between local computer/server and [Crowdi
 
 It is cross-platform and can be run in a terminal (Linux, MacOS X) or in cmd.exe (Windows).
 
-![ScreenShot](http://i.imgur.com/HmjWDC3.png)
+![ScreenShot](http://i.imgur.com/HmjWDC3.png?1)
 
 > **WARNING**: This is a development version: It contains the latest changes, but may also have several known issues, including crashes and data loss situations. In fact, it may not work at all.
 
