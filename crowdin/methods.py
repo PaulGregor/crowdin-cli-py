@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function, unicode_literals
 import six
 from connection import Connection, Configuration
@@ -350,5 +350,6 @@ class Methods:
         return listing
 
 
+		
     def test(self):
         print(Configuration(self.options_config).get_files_source())

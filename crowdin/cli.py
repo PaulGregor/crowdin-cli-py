@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function, unicode_literals
 from __init__ import __version__
 import argparse
@@ -133,18 +133,18 @@ VERSION:
     # Can't Take My Eyes Off You
 
     def upload_files(self, upload):
-        print(upload)
+        # print(upload)
         if upload.sources == "sources":
             return methods.Methods(upload, self.open_file(upload)).upload_sources()
         if upload.sources == "translations":
             return methods.Methods(upload, self.open_file(upload)).upload_translations()
 
     def list_files(self, list_f):
-        #print(list_f)
+        # print(list_f)
         return methods.Methods(list_f, self.open_file(list_f)).list_project_files()
 
     def download_project(self, download):
-        print(download)
+        # print(download)
         return methods.Methods(download, self.open_file(download)).download_project()
 
 

@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import division, absolute_import, print_function
 from __init__ import __version__
 import six
@@ -388,7 +388,6 @@ class Connection(Configuration):
 
                 return response.content
                 # return response.text
-
 
 def result_handling(self):
     print(self)

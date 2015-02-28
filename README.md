@@ -368,7 +368,7 @@ Tested with the following Python versions:
 
 ## Changelog
 
-28.02.2015 - Version 0.92.5:
+28.02.2015 - Version 0.94.5:
 
 	- Support for Python 3.2+ was implemented.
 	
