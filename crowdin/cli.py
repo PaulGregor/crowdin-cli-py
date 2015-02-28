@@ -1,8 +1,9 @@
 ﻿# -*- coding: utf-8 -*-
+from __future__ import division, absolute_import, print_function, unicode_literals
 from __init__ import __version__
 import argparse
 import gettext
-import methods
+import methods as methods
 import logging
 import os
 import sys
@@ -25,9 +26,9 @@ class Main:
         l_dir = os.path.dirname(os.path.realpath(__file__)) + "/locales"
 
         loc = gettext.translation('cli', l_dir, languages=['en'])
-        _ = loc.ugettext
+        # _ = loc.ugettext
+        _ = loc.gettext
         loc.install()
-        #print "__init__ cli"
 
     def main(self):
         parser = argparse.ArgumentParser(prog='crowdin-cli-py', add_help=False, usage=argparse.SUPPRESS, formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -56,10 +57,8 @@ VERSION:
 
         subparsers = parser.add_subparsers(title='COMMANDS', metavar='')
 
-
         # A help command
         help_parser = subparsers.add_parser('help', help='Shows a list of commands or help for one command')
-
 
         # A upload command
         upload_parser = subparsers.add_parser('upload', help='Upload files to the server')
@@ -77,7 +76,6 @@ VERSION:
         upload_parser.add_argument('--no-auto-approve-imported', action='store_false',  dest='imported', help='- Mark uploaded translations as approved.')
 
         upload_parser.set_defaults(func=self.upload_files)
-
 
         # A list command
         list_parser = subparsers.add_parser('list', help='List information about the files')
@@ -100,17 +98,17 @@ VERSION:
 
         download_parser.set_defaults(func=self.download_project)
 
-        #A test command
-        #test_parser = subparsers.add_parser('test', help='Test Crowdin project.')
-        #test_parser.add_argument('dirname', action='store', help='New directory to create')
-        #test_parser.set_defaults(func=self.test)
+        # A test command
+        # test_parser = subparsers.add_parser('test', help='Test Crowdin project.')
+        # test_parser.add_argument('dirname', action='store', help='New directory to create')
+        # test_parser.set_defaults(func=self.test)
 
         if len(sys.argv) == 1 or "help" in sys.argv:
             parser.print_help()
             sys.exit(1)
 
-        #results = parser.parse_args()
-        #print results.config
+        # results = parser.parse_args()
+        # print results.config
 
         if "upload" in sys.argv and not "sources" in sys.argv and not "translations" in sys.argv:
             upload_parser.print_help()
@@ -120,7 +118,7 @@ VERSION:
             list_parser.print_help()
             sys.exit(1)
         # print args.identity
-        #print "I'm method main"
+        # print "I'm method main"
         args = parser.parse_args()
         if args.verbose:
             self.logger.setLevel(logging.DEBUG)
@@ -132,18 +130,21 @@ VERSION:
 
     def test(self, test):
         return methods.Methods(test, self.open_file(test)).test()
-    #Can't Take My Eyes Off You
+    # Can't Take My Eyes Off You
 
     def upload_files(self, upload):
+        print(upload)
         if upload.sources == "sources":
             return methods.Methods(upload, self.open_file(upload)).upload_sources()
         if upload.sources == "translations":
             return methods.Methods(upload, self.open_file(upload)).upload_translations()
 
     def list_files(self, list_f):
+        #print(list_f)
         return methods.Methods(list_f, self.open_file(list_f)).list_project_files()
 
     def download_project(self, download):
+        print(download)
         return methods.Methods(download, self.open_file(download)).download_project()
 
 
@@ -161,11 +162,11 @@ VERSION:
             try:
                 config = yaml.load(fh)
             except yaml.YAMLError as e:
-                print e, '\n Could not parse YAML. ' \
-                         'We were unable to successfully parse the crowdin.yaml file that you provided - ' \
-                         'it most likely is not well-formed YAML. ' \
-                         '\n Please check whether your crowdin.yaml is valid YAML - you can use ' \
-                         'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.'
+                print(e, '\n Could not parse YAML. '
+                         'We were unable to successfully parse the crowdin.yaml file that you provided - '
+                         'it most likely is not well-formed YAML. '
+                         '\n Please check whether your crowdin.yaml is valid YAML - you can use '
+                         'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.')
                 exit()
             if os.path.isfile(home):
                 fhh = open(home, "r")
@@ -175,12 +176,12 @@ VERSION:
                 if config_api.get('project_identifier'):
                     config['project_identifier'] = config_api.get('project_identifier')
                 fhh.close()
-            #print "I'M robot method open file"
+            # print "I'M robot method open file"
             fh.close()
         except(OSError, IOError) as e:
-            print e, 'Can''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` ' \
-                     'to know how to specify custom configuration file See ' \
-                     'http://crowdin.com/page/cli-tool#configuration-file for more details'
+            print(e, 'Can''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` '
+                     'to know how to specify custom configuration file See '
+                     'http://crowdin.com/page/cli-tool#configuration-file for more details')
             exit()
         else:
             return config
