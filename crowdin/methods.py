@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
+from crowdin.connection import Connection, Configuration
 import six
-from connection import Connection, Configuration
 import logging
 import json
 import zipfile

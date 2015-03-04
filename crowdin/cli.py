@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
-from __init__ import __version__
+from crowdin.__init__ import __version__
+from crowdin import methods
 import argparse
 import gettext
-import methods as methods
 import logging
 import os
 import sys
@@ -184,6 +184,9 @@ VERSION:
                      'http://crowdin.com/page/cli-tool#configuration-file for more details')
             exit()
         else:
+            if not config.get('base_path'):
+                print("Warning: Configuration file misses parameter `base_path` that defines "
+                      "your project root directory. Using current directory as a root directory.")
             return config
 
 if __name__ == "__main__":

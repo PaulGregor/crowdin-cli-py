@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function
-from __init__ import __version__
+from crowdin.__init__ import __version__
 import six
+import sys
 import json
 import os
 import traceback
@@ -56,8 +57,6 @@ class Configuration(object):
             # print config['base_path']
             self.base_path = config['base_path']
         else:
-            print("Warning: Configuration file misses parameter `base_path` that defines "
-                  "your project root directory. Using current directory as a root directory.")
             self.base_path = os.getcwd().decode(sys.getfilesystemencoding())
         # self.files_source = config['files'][0]['source']
         if config.get('files'):
