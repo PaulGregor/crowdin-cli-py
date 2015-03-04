@@ -369,11 +369,14 @@ Tested with the following Python versions:
 
 ## Changelog
 
-28.02.2015 - Version 0.94.5:
+**Version 0.95.1** - 04.03.2015:
 
-	- Support for Python 3.2+ was implemented.
+* Errors with non-ascii characters and troubles with import have been fixed.
 	
-	- Environment variable for API Credentials.
+**Version 0.94.5** - 28.02.2015:
+
+* Support for Python 3.2+ was implemented.
+* Environment variable for API Credentials.
 
 ## License and Author
 
@@ -382,3 +385,5 @@ Author: Paul Gregor (comixan@gmail.com)
 Copyright: 2012-2014 [crowdin.com](https://crowdin.com/)
 
 This project is licensed under the MIT license, a copy of which can be found in the LICENSE file.
+
+       # acording to specification instead of just 
