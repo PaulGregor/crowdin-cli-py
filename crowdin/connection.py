@@ -58,7 +58,7 @@ class Configuration(object):
         else:
             print("Warning: Configuration file misses parameter `base_path` that defines "
                   "your project root directory. Using current directory as a root directory.")
-            self.base_path = os.getcwd()
+            self.base_path = os.getcwd().decode(sys.getfilesystemencoding())
         # self.files_source = config['files'][0]['source']
         if config.get('files'):
             self.files_source = config['files']
