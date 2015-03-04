@@ -179,8 +179,8 @@ VERSION:
             # print "I'M robot method open file"
             fh.close()
         except(OSError, IOError) as e:
-            print(e, 'Can''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` '
-                     'to know how to specify custom configuration file See '
+            print(e, '\nCan''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` '
+                     'to know how to specify custom configuration file. \nSee '
                      'http://crowdin.com/page/cli-tool#configuration-file for more details')
             exit()
         else:
