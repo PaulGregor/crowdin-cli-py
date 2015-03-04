@@ -151,7 +151,7 @@ VERSION:
     def open_file(self, options_config):
         # reading configuration file
         location_to_configuration_file = 'crowdin.yaml'
-        home = os.path.expanduser("~") + "/.crowdin.yaml"
+        home = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
 
         if options_config.config:
             location_to_configuration_file = options_config.config
