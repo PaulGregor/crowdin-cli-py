@@ -368,6 +368,9 @@ Tested with the following Python versions:
 5. Create new Pull Request
 
 ## Changelog
+**Version 0.95.2** - 19.11.2015:
+
+* Error with finding translations files path on Python 2.7 have been fixed.
 
 **Version 0.95.1** - 04.03.2015:
 
