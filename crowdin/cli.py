@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
-from crowdin.__init__ import __version__
-from crowdin import methods
+try:
+    from crowdin.__init__ import __version__
+    from crowdin import methods
+except ImportError:
+    from __init__ import __version__
+    import methods
 import argparse
 import gettext
 import logging

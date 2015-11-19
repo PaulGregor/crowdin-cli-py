@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import division, print_function
-from crowdin.__init__ import __version__
+try:
+    from crowdin.__init__ import __version__
+except ImportError:
+    from __init__ import __version__
 import six
 import sys
 import json
@@ -187,7 +190,11 @@ class Configuration(object):
 
                                         if not [s for s in ignore_list if s in value]:
                                             sources.append(value)
-                                            sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
+                                            f['translation'] = f['translation'].replace("\\", r'/')
+                                            fgg = fgg.replace("\\", r'/')
+                                            items = items.replace("\\", r'/')
+                                            dp = dp.replace("\\", r'/')
+                                            sources.append(f['translation'].replace('**', dp.replace(items, '').replace(fgg, '')))
                                             sources.append(parameters)
 
                     else:
@@ -214,7 +221,11 @@ class Configuration(object):
                                 value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
                                 if not [s for s in ignore_list if s in value]:
                                     sources.append(value)
-                                    sources.append(f['translation'].replace(fgg, '').replace('**', dp.replace(items, '').replace("\\", r'/')))
+                                    f['translation'] = f['translation'].replace("\\", r'/')
+                                    fgg = fgg.replace("\\", r'/')
+                                    items = items.replace("\\", r'/')
+                                    dp = dp.replace("\\", r'/')
+                                    sources.append(f['translation'].replace('**', dp.replace(items, '').replace(fgg, '')))
                                     sources.append(parameters)
 
             else:

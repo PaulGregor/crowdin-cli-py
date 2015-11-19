@@ -1,6 +1,9 @@
 ﻿# -*- coding: utf-8 -*-
 from __future__ import division, print_function, unicode_literals
-from crowdin.connection import Connection, Configuration
+try:
+    from crowdin.connection import Connection, Configuration
+except ImportError:
+    from connection import Connection, Configuration
 import six
 import logging
 import json
