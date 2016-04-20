@@ -304,7 +304,12 @@ class Methods:
                         if structure == key:
                             matched_files.append(structure)
                             source = z.open(structure)
-                            target = open(os.path.join(base_path, value), "wb")
+                            target_path = os.path.join(base_path, value)
+                            target_dir = os.path.dirname(target_path)
+                            if not os.path.isdir(target_dir):
+                                os.makedirs(target_dir)
+
+                            target = open(target_path, "wb")
                             logger.info("Download: {0}".format(value))
                             with source, target:
                                 shutil.copyfileobj(source, target)
