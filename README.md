@@ -1,4 +1,4 @@
-# Crowdin-cli-py --- 0.95.2
+# Crowdin-cli-py --- 0.95.3
 [![Build Status](https://travis-ci.org/PaulGregor/crowdin-cli.svg?branch=master)](https://travis-ci.org/PaulGregor/crowdin-cli)
 
 [Crowdin Integration Utility Homepage](https://crowdin.com/page/cli-tool)
@@ -368,6 +368,10 @@ Tested with the following Python versions:
 5. Create new Pull Request
 
 ## Changelog
+**Version 0.95.3** - 20.04.2016:
+
+* During download process directories for translations file will be created if not exist.
+
 **Version 0.95.2** - 19.11.2015:
 
 * Error with finding translations files path on Python 2.7 have been fixed.
