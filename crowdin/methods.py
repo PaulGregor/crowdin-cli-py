@@ -74,10 +74,7 @@ class Methods:
                 for node in data:
                     if node.get('node_type') == 'branch' and node.get('name') == branch:
                         # remove branch name from files hierarchy
-                        for result in self.parse(node.get('files'), parent, branch):
-                            yield result
-                    elif node.get('node_type') != 'branch':
-                        for result in self.parse(node.get('files'), parent + '/' + node.get('name')):
+                        for result in self.parse(node.get('files'), parent, branch=False):
                             yield result
             else:
                 for node in data:
