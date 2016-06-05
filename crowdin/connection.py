@@ -94,10 +94,13 @@ class Configuration(object):
         return root, items, fg
 
     # Method for getting parameters from configuration file.
-    def metacharacter(self, name_filter):
+    @staticmethod
+    def metacharacter(name_filter):
         if name_filter.find('\\') > -1:
             r = name_filter.find('\\') + 1
-            name_filter = name_filter.replace(name_filter[r], "[{0}]".format(name_filter[r])).replace(name_filter[r-1], '')
+            name_filter = name_filter.replace(
+                name_filter[r], "[{0}]".format(name_filter[r])
+            ).replace(name_filter[r-1], '')
         return name_filter
 
     def get_files_source(self):
@@ -176,16 +179,15 @@ class Configuration(object):
             root, items, fg = self.get_doubled_asterisk(f['source'])
             if '*' in file_name or '?' in file_name or '[' in file_name:
                     if '**' in f['source']:
-                        # sources = [os.path.join(dp.strip(root), ff).replace("\\", r'/') for dp, dn, filenames in os.walk(items)
-                        #          for ff in filenames if os.path.splitext(ff)[1] == os.path.splitext(f['source'])[1]]
 
                         for dp, dn, filenames in os.walk(items):
                             for ff in filenames:
 
                                 if fnmatch.fnmatch(ff, self.metacharacter(f['source'][f['source'].rfind('/'):][1:])):
                                     if fg in dp.replace("\\", r'/'):
-                                        fgg=''
-                                        if fg:fgg = '/'+fg
+                                        fgg = ''
+                                        if fg:
+                                            fgg = '/' + fg
                                         value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
 
                                         if not [s for s in ignore_list if s in value]:
@@ -194,7 +196,9 @@ class Configuration(object):
                                             fgg = fgg.replace("\\", r'/')
                                             items = items.replace("\\", r'/')
                                             dp = dp.replace("\\", r'/')
-                                            sources.append(f['translation'].replace('**', dp.replace(items, '').replace(fgg, '')))
+                                            sources.append(
+                                                f['translation'].replace('**', dp.replace(items, '').replace(fgg, ''))
+                                            )
                                             sources.append(parameters)
 
                     else:
@@ -216,8 +220,9 @@ class Configuration(object):
                     for ff in filenames:
                         if ff == f['source'][f['source'].rfind('/'):][1:]:
                             if fg in dp.replace("\\", r'/'):
-                                fgg=''
-                                if fg:fgg = '/'+fg
+                                fgg = ''
+                                if fg:
+                                    fgg = '/' + fg
                                 value = os.path.join(dp.replace(root, ''), ff).replace("\\", r'/')
                                 if not [s for s in ignore_list if s in value]:
                                     sources.append(value)
@@ -225,7 +230,9 @@ class Configuration(object):
                                     fgg = fgg.replace("\\", r'/')
                                     items = items.replace("\\", r'/')
                                     dp = dp.replace("\\", r'/')
-                                    sources.append(f['translation'].replace('**', dp.replace(items, '').replace(fgg, '')))
+                                    sources.append(
+                                        f['translation'].replace('**', dp.replace(items, '').replace(fgg, ''))
+                                    )
                                     sources.append(parameters)
 
             else:
@@ -237,7 +244,8 @@ class Configuration(object):
             print('It seems that there are none files to upload. Please check your configuration')
         return sources
 
-    def android_locale_code(self, locale_code):
+    @staticmethod
+    def android_locale_code(locale_code):
         if locale_code == "he-IL":
             locale_code = "iw-IL"
         elif locale_code == "yi-DE":
@@ -246,7 +254,8 @@ class Configuration(object):
             locale_code = "in-ID"
         return locale_code.replace('-', '-r')
 
-    def osx_language_code(self, locale_code):
+    @staticmethod
+    def osx_language_code(locale_code):
         if locale_code == "zh-TW":
             locale_code = "zh-Hant"
         elif locale_code == "zh-CN":
@@ -318,7 +327,7 @@ class Configuration(object):
 
                         except Exception as e:
                             print(e, 'It seems that languages_mapping is not set correctly')
-                            exit()
+                            exit(1)
                 m = re.search("%[a-z0-9_]*?%", value_translation)
                 if m.group(0) not in pattern:
                     print('Warning: {} is not valid variable supported by Crowdin. See '
@@ -328,10 +337,10 @@ class Configuration(object):
                 rep = dict((re.escape(k), v) for k, v in six.iteritems(pattern))
                 patter = re.compile("|".join(rep.keys()))
                 text = patter.sub(lambda m: rep[re.escape(m.group(0))], path_lang)
-                if not text in translation:
+                if text not in translation:
                     translation[l['crowdin_code']] = (text[1:] if text[:1] == '/' else text).replace('//', '/', 1)
 
-                if not path in lang_info:
+                if path not in lang_info:
                     lang_info.append(path)
                     lang_info.append(translation)
                     lang_info.append(translations_params)
@@ -350,17 +359,21 @@ class Connection(Configuration):
 
     def connect(self):
         valid_url = self.base_url + self.url['url_par1']
-        if self.url['url_par2']: valid_url += self.get_project_identifier()
+        if self.url['url_par2']:
+            valid_url += self.get_project_identifier()
         valid_url += self.url['url_par3']
-        if self.url['url_par4']: valid_url += '?key=' + self.get_api_key()
+        if self.url['url_par4']:
+            valid_url += '?key=' + self.get_api_key()
         headers = {
             'User-Agent': 'crowdin-cli-py v.{0}'.format(__version__),
         }
         try:
-            logger.debug('Request started: \n{0} \n{1} \n{2} \n{3} \n{4} \nRequest ended.'.format(self.url['post'],
-                                                                    valid_url, self.params,
-                                                                    self.files, headers))
-            response = requests.request(self.url['post'], valid_url, data=self.params, files=self.files, headers=headers)
+            logger.debug('Send request: \n{0} \n{1} \n{2} \n{3} \n{4} \n.'.format(
+                self.url['post'], valid_url, self.params, self.files, headers
+            ))
+            response = requests.request(
+                self.url['post'], valid_url, data=self.params, files=self.files, headers=headers
+            )
 
         except requests.exceptions.ConnectionError as e:
             if self.any_options.verbose is True:
@@ -371,7 +384,8 @@ class Connection(Configuration):
             exit()
         else:
             try:
-                logger.debug(json.loads(response.text))
+                if 'json' in response.headers['content-type']:
+                    logger.debug(json.loads(response.text))
             except ValueError:
                 pass
             if response.status_code != 200:
@@ -380,6 +394,7 @@ class Connection(Configuration):
 
             elif self.additional_parameters:
                 data = json.loads(response.text)
+                answer = 'skipped'
                 # print data
                 if self.additional_parameters.get("action_type") != 'translations':
                     if not data.get('stats'):
@@ -387,17 +402,24 @@ class Connection(Configuration):
                             answer = data["files"][self.additional_parameters.get("file_name")]
                     else:
                         answer = "OK"
-                    logger.info("{0} source file: {1} - {2}".format(self.additional_parameters.get('action_type'),
-                                                                    self.additional_parameters.get("file_name"), answer))
+                    logger.info("{0} source file: {1} - {2}".format(
+                        self.additional_parameters.get('action_type'),
+                        self.additional_parameters.get("file_name"), answer
+                    ))
                 else:
-                    answer = data["files"][self.additional_parameters.get("file_name")]
+                    expected_file = self.additional_parameters.get("file_name")
+                    if self.params.get('branch'):
+                        expected_file = self.params.get('branch') + '/' + expected_file
+                    answer = data["files"][expected_file]
                     logger.info("Uploading {0} translation for source file: {1} - {2}".format(
                         self.additional_parameters.get('t_l'), self.additional_parameters.get("file_name"),
-                        answer))
+                        answer
+                    ))
             else:
 
                 return response.content
                 # return response.text
+
 
 def result_handling(self):
     print(self)

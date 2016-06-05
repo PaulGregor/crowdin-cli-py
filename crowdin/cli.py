@@ -69,6 +69,7 @@ VERSION:
         upload_parser.add_argument('sources', help='This argument uploads sources files', nargs='?')
         upload_parser.add_argument('translations',  help='This argument uploads translations files', nargs='?')
         upload_parser.add_argument('-l', '--language', action='store', metavar='', dest='language', help='- Defines the language translations should be uploaded to.')
+        upload_parser.add_argument('-b', '--branch', action='store', metavar='', dest='branch', help='- Defines the brahcn should be uploaded to.')
 
         upload_parser.add_argument('--import-duplicates', action='store_const',  dest='duplicates', const='1', help='- Defines whether to add translation if there is the same translation previously added.')
         upload_parser.add_argument('--no-import-duplicates', action='store_false', dest='duplicates', help='- Defines whether to add translation if there is the same translation previously added.')
@@ -99,6 +100,7 @@ VERSION:
                                    help='- If the option is defined the '
                                         'translations will be downloaded for single specified language.'
                                         'Otherwise (by default) translations are downloaded for all languages')
+        download_parser.add_argument('-b', '--branch', action='store', metavar='', dest='branch', help='- Defines the brahcn should be downloaded to.')
 
         download_parser.set_defaults(func=self.download_project)
 
@@ -108,7 +110,12 @@ VERSION:
         # test_parser.set_defaults(func=self.test)
 
         if len(sys.argv) == 1 or "help" in sys.argv:
-            parser.print_help()
+            if "upload" in sys.argv:
+                upload_parser.print_help()
+            elif "download" in sys.argv:
+                download_parser.print_help()
+            else:
+                parser.print_help()
             sys.exit(1)
 
         # results = parser.parse_args()
