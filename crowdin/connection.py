@@ -395,24 +395,28 @@ class Connection(Configuration):
             elif self.additional_parameters:
                 data = json.loads(response.text)
                 answer = 'skipped'
-                # print data
+
+                # branch name handling
+                branch = ''
+                expected_file = self.additional_parameters.get("file_name")
+                if self.params.get('branch'):
+                    expected_file = self.params.get('branch') + '/' + expected_file
+                    branch = ' in branch "' + self.any_options.branch + '"'
+
                 if self.additional_parameters.get("action_type") != 'translations':
                     if not data.get('stats'):
                         if self.additional_parameters.get("file_name") in data["files"]:
                             answer = data["files"][self.additional_parameters.get("file_name")]
                     else:
                         answer = "OK"
-                    logger.info("{0} source file: {1} - {2}".format(
+                    logger.info("{0} source file{1}: {2} - {3}".format(
                         self.additional_parameters.get('action_type'),
-                        self.additional_parameters.get("file_name"), answer
+                        branch, self.additional_parameters.get("file_name"), answer
                     ))
                 else:
-                    expected_file = self.additional_parameters.get("file_name")
-                    if self.params.get('branch'):
-                        expected_file = self.params.get('branch') + '/' + expected_file
                     answer = data["files"][expected_file]
-                    logger.info("Uploading {0} translation for source file: {1} - {2}".format(
-                        self.additional_parameters.get('t_l'), self.additional_parameters.get("file_name"),
+                    logger.info("Uploading {0} translation {1} for source file: {2} - {3}".format(
+                        self.additional_parameters.get('t_l'), branch, self.additional_parameters.get("file_name"),
                         answer
                     ))
             else:

@@ -97,7 +97,7 @@ VERSION:
         # A download command
         download_parser = subparsers.add_parser('download', help='Download projects files')
         download_parser.add_argument('-l', '--language', action='store', metavar='', dest='dlanguage',
-                                   help='- If the option is defined the '
+                                     help='- If the option is defined the '
                                         'translations will be downloaded for single specified language.'
                                         'Otherwise (by default) translations are downloaded for all languages')
         download_parser.add_argument('-b', '--branch', action='store', metavar='', dest='branch', help='- Defines the brahcn should be downloaded to.')
@@ -157,7 +157,6 @@ VERSION:
     def download_project(self, download):
         # print(download)
         return methods.Methods(download, self.open_file(download)).download_project()
-
 
     def open_file(self, options_config):
         # reading configuration file

@@ -337,7 +337,7 @@ class Methods:
 
             initial_files = unzip_dict.keys()
             for target_lang in lang:
-                for source_file in initial_files:
+                for source_file in list(initial_files):
                     # change only for target_lang files
                     for lang_key in target_lang:
                         if target_lang[lang_key] in source_file:
@@ -347,8 +347,8 @@ class Methods:
                                 r_source = list(reversed(source_file.split('/')))
                                 r_target = list(reversed(unzip_dict[source_file].split('/')))
                                 f = ''
-                                print(r_source)
-                                print(r_target)
+                                # print(r_source)
+                                # print(r_target)
                                 for i in range(len(r_target)-1):
                                     if r_target[i] == r_source[i]:
                                         f = '/' + r_target[i] + f
@@ -383,7 +383,7 @@ class Methods:
 
             if unmatched_files:
                 logger.warning(
-                    "Warning: Downloaded translations do not match current project configuration. "
+                    "\n Warning: Downloaded translations do not match current project configuration. "
                     "Some of the resulted files will be omitted."
                 )
                 for i in unmatched_files:
