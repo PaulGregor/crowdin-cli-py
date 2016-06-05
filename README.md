@@ -17,7 +17,10 @@ It is cross-platform and can be run in a terminal (Linux, MacOS X) or in cmd.exe
 ###**Windows**:
 
 [Download link](https://sourceforge.net/projects/crowdin/files/latest/download?source=files)
-
+After installing you need to get last version from PyPI using this command:
+```
+pip install crowdin-cli-py --upgrade
+```
 ###**Ubuntu/Debian**:
 ```
 (sudo) pip install crowdin-cli-py
