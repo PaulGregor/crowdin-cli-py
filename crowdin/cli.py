@@ -158,22 +158,23 @@ VERSION:
         # print(download)
         return methods.Methods(download, self.open_file(download)).download_project()
 
-    def open_file(self, options_config):
+    @staticmethod
+    def open_file(options_config):
         # reading configuration file
-        location_to_configuration_file = 'crowdin.yaml'
-        home = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
+        if options_config.config:
+            location_to_configuration_file = options_config.config
+        else:
+            location_to_configuration_file = 'crowdin.yaml'
+
+        if options_config.identity:
+            home = options_config.identity
+        else:
+            home = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
 
         try:
-            fh = open(location_to_configuration_file, "r")
-            try:
-                config = yaml.load(fh)
-            except yaml.YAMLError as e:
-                print(e, '\n Could not parse YAML. '
-                         'We were unable to successfully parse the crowdin.yaml file that you provided - '
-                         'it most likely is not well-formed YAML. '
-                         '\n Please check whether your crowdin.yaml is valid YAML - you can use '
-                         'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.')
-                exit()
+            config_file = open(location_to_configuration_file, "r")
+            config = yaml.load(config_file)
+            
             if os.path.isfile(home):
                 fhh = open(home, "r")
                 config_api = yaml.load(fhh)
@@ -183,17 +184,24 @@ VERSION:
                     config['project_identifier'] = config_api.get('project_identifier')
                 fhh.close()
             # print "I'M robot method open file"
-            fh.close()
+            config_file.close()
         except(OSError, IOError) as e:
             print(e, '\nCan''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` '
                      'to know how to specify custom configuration file. \nSee '
                      'http://crowdin.com/page/cli-tool#configuration-file for more details')
             exit()
-        else:
-            if not config.get('base_path'):
-                print("Warning: Configuration file misses parameter `base_path` that defines "
-                      "your project root directory. Using current directory as a root directory.")
-            return config
+        except yaml.YAMLError as e:
+            print(e, '\n Could not parse YAML. '
+                     'We were unable to successfully parse the crowdin.yaml file that you provided - '
+                     'it most likely is not well-formed YAML. '
+                     '\n Please check whether your crowdin.yaml is valid YAML - you can use '
+                     'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.')
+            exit()        
+
+        if not config.get('base_path'):
+            print("Warning: Configuration file misses parameter `base_path` that defines "
+                  "your project root directory. Using current directory as a root directory.")
+        return config
 
 if __name__ == "__main__":
     Main().main()
