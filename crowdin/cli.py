@@ -161,12 +161,23 @@ VERSION:
         return methods.Methods(download, self.parse_config_file(download)).download_project()
 
     @staticmethod
-    def open_file(location_to_configuration_file):
+    def open_file(location_to_configuration_file, location_to_api_file):
         # reading configuration file
         try:
             config_file = open(location_to_configuration_file, "r")
             config = yaml.load(config_file)
             config_file.close()
+
+            if os.path.isfile(location_to_api_file):
+                identity_file = open(location_to_api_file, "r")
+                config_api = yaml.load(identity_file)
+                if config_api.get('api_key'):
+                    config['api_key'] = config_api.get('api_key')
+                if config_api.get('project_identifier'):
+                    config['project_identifier'] = config_api.get('project_identifier')
+
+                identity_file.close()
+
             return config
         except(OSError, IOError) as e:
             print(e, '\nCan''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` '
@@ -183,25 +194,16 @@ VERSION:
 
     def parse_config_file(self, options_config):
         if options_config.config:
-            config = self.open_file(options_config.config)
+            location_to_configuration_file = options_config.config
         else:
-            config = self.open_file('crowdin.yaml')
+            location_to_configuration_file = 'crowdin.yaml'
 
         if options_config.identity:
-            home = options_config.identity
+            location_to_api_file = options_config.identity
         else:
-            home = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
-
-        if os.path.isfile(home):
-            identity_file = open(home, "r")
-            config_api = yaml.load(identity_file)
-            if config_api.get('api_key'):
-                config['api_key'] = config_api.get('api_key')
-            if config_api.get('project_identifier'):
-                config['project_identifier'] = config_api.get('project_identifier')
-                identity_file.close()
-        # print "I'M robot method open file"
-
+            location_to_api_file = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
+        
+        config = self.open_file(location_to_configuration_file, location_to_api_file)
         if not config.get('base_path'):
             print("Warning: Configuration file misses parameter `base_path` that defines "
                   "your project root directory. Using current directory as a root directory.")
