@@ -34,9 +34,9 @@ class Main:
         _ = loc.gettext
         loc.install()
 
-    def main(self):
-        parser = argparse.ArgumentParser(prog='crowdin-cli-py', add_help=False, usage=argparse.SUPPRESS, formatter_class=argparse.RawDescriptionHelpFormatter,
-                                         description=('''\
+        self.parser = argparse.ArgumentParser(prog='crowdin-cli-py', add_help=False, usage=argparse.SUPPRESS,
+                                              formatter_class=argparse.RawDescriptionHelpFormatter,
+                                              description=('''\
 NAME:
     Crowdin-cli-py {0}
 
@@ -49,23 +49,48 @@ SYNOPSIS:
 VERSION:
     {1}                                     ''').format(_("desc"), __version__))
 
+    def main(self):
+        parser = self.parser
         parser._optionals.title = 'GLOBAL OPTIONS'
-
-
-        parser.add_argument('-c', '--config', action='store', metavar='', dest='config', help='- Project-specific configuration file')
-        parser.add_argument('--identity', action='store', dest='identity', metavar='', help='- User-specific configuration file with '
-                                                                                'API credentials')
-        parser.add_argument('--version', action='version', version="%(prog)s {0}".format(__version__), help='- Display the program version')
+        parser.add_argument('-c', '--config', action='store', metavar='', dest='config',
+                            help='- Project-specific configuration file')
+        parser.add_argument('--identity', action='store', dest='identity', metavar='',
+                            help='- User-specific configuration file with API credentials')
+        parser.add_argument('--version', action='version', version="%(prog)s {0}".format(__version__),
+                            help='- Display the program version')
         parser.add_argument('-v', '--verbose', action='store_true', default=False, dest='verbose', help='- Be verbose')
         parser.add_argument('--help', action='help', help='- Show this message')
 
         subparsers = parser.add_subparsers(title='COMMANDS', metavar='')
 
-        # A help command
-        help_parser = subparsers.add_parser('help', help='Shows a list of commands or help for one command')
-
-        # A upload command
+        # A help commands
+        subparsers.add_parser('help', help='Shows a list of commands or help for one command')
         upload_parser = subparsers.add_parser('upload', help='Upload files to the server')
+        list_parser = subparsers.add_parser('list', help='List information about the files')
+        download_parser = subparsers.add_parser('download', help='Download projects files')
+
+        if len(sys.argv) == 1 or "help" in sys.argv:
+            parser.print_help()
+            sys.exit(1)
+
+        # results = parser.parse_args()
+        # print results.config
+        self.upload_parser(upload_parser)
+        self.list_parser(list_parser)
+        self.download_parser(download_parser)
+
+        # print args.identity
+        # print "I'm method main"
+        args = parser.parse_args()
+        if args.verbose:
+            self.logger.setLevel(logging.DEBUG)
+            self.console.setLevel(logging.DEBUG)
+            self.logger.addHandler(self.console)
+
+        args.func(args)
+
+    def upload_parser(self, upload_parser):
+        # A upload command
         upload_parser.add_argument('sources', help='This argument uploads sources files', nargs='?')
         upload_parser.add_argument('translations',  help='This argument uploads translations files', nargs='?')
         upload_parser.add_argument('-l', '--language', action='store', metavar='', dest='language', help='- Defines the language translations should be uploaded to.')
@@ -82,62 +107,39 @@ VERSION:
 
         upload_parser.set_defaults(func=self.upload_files)
 
+        if "upload" in sys.argv and "sources" not in sys.argv and "translations" not in sys.argv:
+            return upload_parser.print_help()
+
+    def list_parser(self, list_parser):
         # A list command
-        list_parser = subparsers.add_parser('list', help='List information about the files')
         list_parser.add_argument('sources', action='store', help='List information about the sources files in current '
                                                                  'project.', nargs='?')
         list_parser.add_argument('translations', action='store', help='List information about the translations '
                                                                       'files in current project.', nargs='?')
         list_parser.add_argument('project', action='store', help='List information about the files that already '
                                                                  'exists in current project', nargs='?')
-        list_parser.add_argument('--tree', action='store_true', dest='tree', default=False, help='Built a tree like view')
+        list_parser.add_argument('--tree', action='store_true', dest='tree', default=False,
+                                 help='Built a tree like view')
 
         list_parser.set_defaults(func=self.list_files)
+        if "list" in sys.argv and "sources" not in sys.argv and "translations" not in \
+                sys.argv and "project" not in sys.argv:
+            return list_parser.print_help()
 
+    def download_parser(self, download_parser):
         # A download command
-        download_parser = subparsers.add_parser('download', help='Download projects files')
         download_parser.add_argument('-l', '--language', action='store', metavar='', dest='dlanguage',
-                                     help='- If the option is defined the '
-                                        'translations will be downloaded for single specified language.'
-                                        'Otherwise (by default) translations are downloaded for all languages')
-        download_parser.add_argument('-b', '--branch', action='store', metavar='', dest='branch', help='- Defines the brahcn should be downloaded to.')
+                                     help='- If the option is defined the translations will be downloaded for single '
+                                          'specified language. Otherwise (by default) translations are downloaded '
+                                          'for all languages')
+        download_parser.add_argument('-b', '--branch', action='store', metavar='', dest='branch',
+                                     help='- Defines the branch should be downloaded to.')
 
         download_parser.set_defaults(func=self.download_project)
-
         # A test command
         # test_parser = subparsers.add_parser('test', help='Test Crowdin project.')
         # test_parser.add_argument('dirname', action='store', help='New directory to create')
         # test_parser.set_defaults(func=self.test)
-
-        if len(sys.argv) == 1 or "help" in sys.argv:
-            if "upload" in sys.argv:
-                upload_parser.print_help()
-            elif "download" in sys.argv:
-                download_parser.print_help()
-            else:
-                parser.print_help()
-            sys.exit(1)
-
-        # results = parser.parse_args()
-        # print results.config
-
-        if "upload" in sys.argv and not "sources" in sys.argv and not "translations" in sys.argv:
-            upload_parser.print_help()
-            sys.exit(1)
-        if "list" in sys.argv and not "sources" in sys.argv and not "translations" in \
-                sys.argv and not "project" in sys.argv:
-            list_parser.print_help()
-            sys.exit(1)
-        # print args.identity
-        # print "I'm method main"
-        args = parser.parse_args()
-        if args.verbose:
-            self.logger.setLevel(logging.DEBUG)
-            self.console.setLevel(logging.DEBUG)
-            self.logger.addHandler(self.console)
-
-
-        args.func(args)
 
     def test(self, test):
         return methods.Methods(test, self.open_file(test)).test()
@@ -174,7 +176,7 @@ VERSION:
         try:
             config_file = open(location_to_configuration_file, "r")
             config = yaml.load(config_file)
-            
+
             if os.path.isfile(home):
                 fhh = open(home, "r")
                 config_api = yaml.load(fhh)
@@ -196,7 +198,7 @@ VERSION:
                      'it most likely is not well-formed YAML. '
                      '\n Please check whether your crowdin.yaml is valid YAML - you can use '
                      'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.')
-            exit()        
+            exit()
 
         if not config.get('base_path'):
             print("Warning: Configuration file misses parameter `base_path` that defines "
