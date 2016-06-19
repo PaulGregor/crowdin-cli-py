@@ -142,51 +142,32 @@ VERSION:
         # test_parser.set_defaults(func=self.test)
 
     def test(self, test):
-        return methods.Methods(test, self.open_file(test)).test()
+        return methods.Methods(test, self.parse_config_file(test)).test()
     # Can't Take My Eyes Off You
 
     def upload_files(self, upload):
         # print(upload)
         if upload.sources == "sources":
-            return methods.Methods(upload, self.open_file(upload)).upload_sources()
+            return methods.Methods(upload, self.parse_config_file(upload)).upload_sources()
         if upload.sources == "translations":
-            return methods.Methods(upload, self.open_file(upload)).upload_translations()
+            return methods.Methods(upload, self.parse_config_file(upload)).upload_translations()
 
     def list_files(self, list_f):
         # print(list_f)
-        return methods.Methods(list_f, self.open_file(list_f)).list_project_files()
+        return methods.Methods(list_f, self.parse_config_file(list_f)).list_project_files()
 
     def download_project(self, download):
         # print(download)
-        return methods.Methods(download, self.open_file(download)).download_project()
+        return methods.Methods(download, self.parse_config_file(download)).download_project()
 
     @staticmethod
-    def open_file(options_config):
+    def open_file(location_to_configuration_file):
         # reading configuration file
-        if options_config.config:
-            location_to_configuration_file = options_config.config
-        else:
-            location_to_configuration_file = 'crowdin.yaml'
-
-        if options_config.identity:
-            home = options_config.identity
-        else:
-            home = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
-
         try:
             config_file = open(location_to_configuration_file, "r")
             config = yaml.load(config_file)
-
-            if os.path.isfile(home):
-                fhh = open(home, "r")
-                config_api = yaml.load(fhh)
-                if config_api.get('api_key'):
-                    config['api_key'] = config_api.get('api_key')
-                if config_api.get('project_identifier'):
-                    config['project_identifier'] = config_api.get('project_identifier')
-                fhh.close()
-            # print "I'M robot method open file"
             config_file.close()
+            return config
         except(OSError, IOError) as e:
             print(e, '\nCan''t find configuration file (default `crowdin.yaml`). Type `crowdin-cli-py help` '
                      'to know how to specify custom configuration file. \nSee '
@@ -199,6 +180,27 @@ VERSION:
                      '\n Please check whether your crowdin.yaml is valid YAML - you can use '
                      'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.')
             exit()
+
+    def parse_config_file(self, options_config):
+        if options_config.config:
+            config = self.open_file(options_config.config)
+        else:
+            config = self.open_file('crowdin.yaml')
+
+        if options_config.identity:
+            home = options_config.identity
+        else:
+            home = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
+
+        if os.path.isfile(home):
+            identity_file = open(home, "r")
+            config_api = yaml.load(identity_file)
+            if config_api.get('api_key'):
+                config['api_key'] = config_api.get('api_key')
+            if config_api.get('project_identifier'):
+                config['project_identifier'] = config_api.get('project_identifier')
+                identity_file.close()
+        # print "I'M robot method open file"
 
         if not config.get('base_path'):
             print("Warning: Configuration file misses parameter `base_path` that defines "
