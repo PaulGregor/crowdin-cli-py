@@ -163,10 +163,6 @@ VERSION:
         location_to_configuration_file = 'crowdin.yaml'
         home = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
 
-        if options_config.config:
-            location_to_configuration_file = options_config.config
-        if options_config.identity:
-            home = options_config.identity
         try:
             fh = open(location_to_configuration_file, "r")
             try:
