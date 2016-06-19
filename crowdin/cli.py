@@ -161,16 +161,28 @@ VERSION:
         return methods.Methods(download, self.parse_config_file(download)).download_project()
 
     @staticmethod
-    def open_file(location_to_configuration_file, location_to_api_file):
+    def parse_yml(yml_config):
+        try:
+            parsed_yml = yaml.load(yml_config)
+            return parsed_yml
+        except yaml.YAMLError as e:
+            print(e, '\n Could not parse YAML. '
+                     'We were unable to successfully parse the crowdin.yaml file that you provided - '
+                     'it most likely is not well-formed YAML. '
+                     '\n Please check whether your crowdin.yaml is valid YAML - you can use '
+                     'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.')
+            exit()
+       
+    def open_file(self, location_to_configuration_file, location_to_api_file):
         # reading configuration file
         try:
             config_file = open(location_to_configuration_file, "r")
-            config = yaml.load(config_file)
+            config = self.parse_yml(config_file)
             config_file.close()
 
             if os.path.isfile(location_to_api_file):
                 identity_file = open(location_to_api_file, "r")
-                config_api = yaml.load(identity_file)
+                config_api = self.parse_yml(identity_file)
                 if config_api.get('api_key'):
                     config['api_key'] = config_api.get('api_key')
                 if config_api.get('project_identifier'):
@@ -184,13 +196,6 @@ VERSION:
                      'to know how to specify custom configuration file. \nSee '
                      'http://crowdin.com/page/cli-tool#configuration-file for more details')
             exit()
-        except yaml.YAMLError as e:
-            print(e, '\n Could not parse YAML. '
-                     'We were unable to successfully parse the crowdin.yaml file that you provided - '
-                     'it most likely is not well-formed YAML. '
-                     '\n Please check whether your crowdin.yaml is valid YAML - you can use '
-                     'the http://yamllint.com/ validator to do this - and make any necessary changes to fix it.')
-            exit()
 
     def parse_config_file(self, options_config):
         if options_config.config:
@@ -202,7 +207,7 @@ VERSION:
             location_to_api_file = options_config.identity
         else:
             location_to_api_file = os.path.expanduser(b"~").decode(sys.getfilesystemencoding()) + "/.crowdin.yaml"
-        
+
         config = self.open_file(location_to_configuration_file, location_to_api_file)
         if not config.get('base_path'):
             print("Warning: Configuration file misses parameter `base_path` that defines "
