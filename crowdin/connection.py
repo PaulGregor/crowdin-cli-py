@@ -13,7 +13,7 @@ import re
 import logging
 import requests
 import fnmatch
-
+import copy
 
 logger = logging.getLogger('crowdin')
 
@@ -112,55 +112,8 @@ class Configuration(object):
                             "can be used only once in the source pattern.".format(f['source']))
                 exit()
             ignore_list = []
-            parameters = {}
-
-            if 'titles' in f:
-                parameters['titles'] = f['titles']
-
-            if 'type' in f:
-                parameters['type'] = f['type']
-
-            if 'translate_content' in f:
-                parameters['translate_content'] = f['translate_content']
-
-            if 'translate_attributes' in f:
-                parameters['translate_attributes'] = f['translate_attributes']
-
-            if 'content_segmentation' in f:
-                parameters['content_segmentation'] = f['content_segmentation']
-
-            if 'translatable_elements' in f:
-                parameters['translatable_elements'] = f['translatable_elements']
-
-            if 'update_option' in f:
-                parameters['update_option'] = f['update_option']
-
-            if 'first_line_contains_header' in f:
-                parameters['first_line_contains_header'] = f['first_line_contains_header']
-
-            if 'scheme' in f:
-                parameters['scheme'] = f['scheme']
-
-            if 'multilingual_spreadsheet' in f:
-                parameters['multilingual_spreadsheet'] = f['multilingual_spreadsheet']
-
-            if 'import_duplicates' in f:
-                parameters['import_duplicates'] = f['import_duplicates']
-
-            if 'import_eq_suggestions' in f:
-                parameters['import_eq_suggestions'] = f['import_eq_suggestions']
-
-            if 'auto_approve_imported' in f:
-                parameters['auto_approve_imported'] = f['auto_approve_imported']
-
-            if 'languages_mapping' in f:
-                parameters['languages_mapping'] = f['languages_mapping']
-
-            if 'dest' in f:
-                parameters['dest'] = f['dest']
-
-            if 'escape_quotes' in f:
-                parameters['escape_quotes'] = f['escape_quotes']
+            parameters = copy.deepcopy(f)
+            del parameters['source'], parameters['translation']
 
             file_name = f['source'][1:][f['source'].rfind("/"):]
             if 'ignore' in f:
