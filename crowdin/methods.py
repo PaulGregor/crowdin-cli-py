@@ -334,6 +334,8 @@ class Methods:
                     for key, value in six.iteritems(i):
                         if k == key:
                             unzip_dict[value] = v
+                            if self.any_options.branch:
+                                unzip_dict[self.any_options.branch + '/' + value] = v
 
             initial_files = unzip_dict.keys()
             for target_lang in lang:
@@ -354,9 +356,9 @@ class Methods:
                                         f = '/' + r_target[i] + f
 
                             if not self.any_options.branch:
-                                k = target_lang['crowdin_code'] + '/' + f
+                                k = target_lang[lang_key] + '/' + f
                             else:
-                                k = target_lang['crowdin_code'] + '/' + self.any_options.branch + '/' + f
+                                k = self.any_options.branch + '/' + target_lang[lang_key] + '/' + f
                             k = k.replace('//', '/')
                             unzip_dict[k] = unzip_dict[source_file]
 
