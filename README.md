@@ -1,4 +1,4 @@
-# Crowdin-cli-py --- 0.95.4
+# Crowdin-cli-py --- 0.95.5
 [![Build Status](https://travis-ci.org/PaulGregor/crowdin-cli.svg?branch=master)](https://travis-ci.org/PaulGregor/crowdin-cli)
 
 [Crowdin Integration Utility Homepage](https://crowdin.com/page/cli-tool)
@@ -371,6 +371,10 @@ Tested with the following Python versions:
 5. Create new Pull Request
 
 ## Changelog
+**Version 0.95.5** - 29.06.2016:
+
+* Fix some bugs in branches support 
+
 **Version 0.95.4** - 25.04.2016:
 
 * Added branches support see https://support.crowdin.com/articles/versions-management/
