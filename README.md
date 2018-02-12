@@ -1,4 +1,4 @@
-# Crowdin-cli-py --- 0.95.5
+# Crowdin-cli-py --- 0.95.6
 [![Build Status](https://travis-ci.org/PaulGregor/crowdin-cli.svg?branch=master)](https://travis-ci.org/PaulGregor/crowdin-cli)
 
 [Crowdin Integration Utility Homepage](https://crowdin.com/page/cli-tool)
@@ -371,6 +371,10 @@ Tested with the following Python versions:
 5. Create new Pull Request
 
 ## Changelog
+**Version 0.95.6** - 12.02.2018:
+
+* Osx_code updated
+
 **Version 0.95.5** - 29.06.2016:
 
 * Fix some bugs in branches support 
@@ -403,5 +407,3 @@ Author: Paul Gregor (comixan@gmail.com)
 Copyright: 2012-2014 [crowdin.com](https://crowdin.com/)
 
 This project is licensed under the MIT license, a copy of which can be found in the LICENSE file.
-
-       # acording to specification instead of just 
