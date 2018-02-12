@@ -301,7 +301,7 @@ class Configuration(object):
                     '%crowdin_code%': l['crowdin_code'],
                     '%locale_with_underscore%': l['locale'].replace('-', '_'),
                     '%android_code%': self.android_locale_code(l['locale']),
-                    '%osx_code%': self.osx_language_code(l['crowdin_code']) + '.lproj',
+                    '%osx_code%': l['osx_code'],
                     '%osx_xliff%': self.osx_language_code(l['crowdin_code']) + '.xliff',
                 }
                 if not download:
