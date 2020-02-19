@@ -1,5 +1,5 @@
 # Crowdin-cli-py --- 0.95.6
-[![Build Status](https://travis-ci.org/PaulGregor/crowdin-cli.svg?branch=master)](https://travis-ci.org/PaulGregor/crowdin-cli)
+[![Build Status](https://travis-ci.org/PaulGregor/crowdin-cli-py.svg?branch=master)](https://travis-ci.org/PaulGregor/crowdin-cli-py)
 
 [Crowdin Integration Utility Homepage](https://crowdin.com/page/cli-tool)
  | [Support](https://crowdin.com/contacts)
