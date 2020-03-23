@@ -14,14 +14,15 @@ It is cross-platform and can be run in a terminal (Linux, MacOS X) or in cmd.exe
 > **WARNING**: This is a development version: It contains the latest changes, but may also have several known issues, including crashes and data loss situations. In fact, it may not work at all.
 
 ## Installation
-###**Windows**:
+### Windows
 
 [Download link](https://sourceforge.net/projects/crowdin/files/latest/download?source=files)
 After installing you need to get last version from PyPI using this command:
 ```
 pip install crowdin-cli-py --upgrade
 ```
-###**Ubuntu/Debian**:
+
+### Ubuntu/Debian
 ```
 (sudo) pip install crowdin-cli-py
 ```
@@ -85,7 +86,7 @@ Also you can add and upload all directories matching the pattern, including all 
 
 Configuration example provided above has 'source' and 'translation' attributes containing standard wildcards (also known as globbing patterns) to make it easier to work with multiple files.
 
-Here's patterns you can use:
+Here are patterns you can use:
 
 * `*` (asterisk)
 
